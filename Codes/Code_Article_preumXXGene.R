@@ -245,45 +245,39 @@ set.seed(0852)#Pour rendre reproductif ? l'avenir
 
 for (m in 1:length(Noon)) {#Injection des gap par p?riode d'un jours test
   
-  path1<-paste(path,"Tables/MDS_Test/Cycle_diurne_test/Output_of_test/",Noon[m],"/",sep = "")#Chemin pour atteindre le dossier pour les output de la p?riode correspondante
+  path1<-paste(path,Sites[n],"/Table/MDS_Test/Cycle_diurne_test/Output_of_test/",Noon[m],"/",sep = "")#Chemin pour atteindre le dossier pour les output de la p?riode correspondante
   
-  X_percent<-c(50,60,70)
+  X_percent<-c(25,50,100)
   X_percent_suffix<-as.character(X_percent)#Chargement des diff?rent pourcentage
   Percent_file<-paste("Percent_",X_percent_suffix,sep="")#Nom des dossiers pour chaque pourcentage d'injection de gap par p?riode de la journ?e
   
   pb_a<-txtProgressBar(min = 1,max = length(X_percent),style = 3)# barre de progression de la compilation
   for (t in 1:length(X_percent)) {#Injection de gap de pourcentage en position t
-    
-    for (i in 1:N) {#Choix du mois(jours test) d'injection du %t
-      Cycle_diurne_month_test<-Data_cyclediune_test[i,]# Recuperation de la ligne i de la data_frame contenant les cycle diurne test par variable pour chaque mois 
-      
-      Indice_list<-list()#Liste pour r?cupp?rer les indices des demis des jours test correspondant pour chaque variable(5 vecteurs dans la list)
-      
-      for(l in 1:length(Cycle_diurne_month_test)){#R?cuperation des indices par variable et stockage
-        A<-as.character(Cycle_diurne_month_test[l]) 
-        Indice<-which(Data_test$Date_only==A & Data_test$Day_or_nigth_1.2==m-1)
-        Indice_list[[l]]<-Indice
-      }
-      #Formatage en data frame
-      auxi<-max(sapply(Indice_list,length))
-      res<-sapply(Indice_list,function(u) c(u,rep(NA,auxi-length(u))))
-      res<-as.data.frame(res)
-      colnames(res)=Variable_names
-      Indice_list<-as.data.frame(res)
-      
-      simulation<-c(1:4)#Nombre de simulation ? effectuer
-      simulation<-as.character(simulation)
-      
-      XVal<-Data_test1#Data sans les valeurs de la logne 1(00:00)
-      
-      
-      for (j in 1:length(simulation)) {#Parcourt des simulations
+    if(t==3){
+      for (i in 1:N) {
+        Cycle_diurne_month_test<-Data_cyclediune_test[i,]# Recuperation de la ligne i de la data_frame contenant les cycle diurne test par variable pour chaque mois 
+        Indice_list<-list()#Liste pour r?cupp?rer les indices des demis des jours test correspondant pour chaque variable(5 vecteurs dans la list)
+        
+        for(l in 1:length(Cycle_diurne_month_test)){#R?cuperation des indices par variable et stockage
+          A<-as.character(Cycle_diurne_month_test[l]) 
+          Indice<-which(Data_test$Date_only==A & Data_test$Day_or_nigth_1.2==m-1)
+          Indice_list[[l]]<-Indice
+        }
+        #Formatage en data frame
+        auxi<-max(sapply(Indice_list,length))
+        res<-sapply(Indice_list,function(u) c(u,rep(NA,auxi-length(u))))
+        res<-as.data.frame(res)
+        colnames(res)=Variable_names
+        Indice_list<-as.data.frame(res)
+        
+        XVal<-Data_test1#Data sans les valeurs de la logne 1(00:00)
+        
         data_tenpercentnumber_day_1<-(length(Indice_list$HR)*X_percent[t])/100#Calcul du nombre d'indice correspondant a %t
         
-        del<-list()#Liste pour la r?cup?ration des indice s?lection?e al?atoirement pour chaque variable pour la simulation j et pour le jour i(nligne:data_tpercentnumber_day_1,ncolone:nombre de variable)     
+        del<-list()#Liste pour la r?cup?ration des indice s?lection?e al?atoirement pour chaque variable pour la simulation j et pour le jour i(nligne:data_tpercentnumber_day_1,ncolone:nombre de variable)
         
         for (s in 1:length(Cycle_diurne_month_test)) {#R?cuperation des indices par variable et stockage
-          del[[s]]<-sort(sample(Indice_list[,s],data_tenpercentnumber_day_1,replace = FALSE))
+          del[[s]]<-Indice_list[,s]
         }
         #Formatage en data frame  
         auxi<-max(sapply(del,length))
@@ -292,11 +286,10 @@ for (m in 1:length(Noon)) {#Injection des gap par p?riode d'un jours test
         colnames(res)=Variable_names
         del<-as.data.frame(res)
         
-        
         #############################################
         # Artificial Gap filling#
         #############################################
-        
+        #setwd("/media/yaulande/Recreator/anon-ms-example/")
         
         
         ### Loading the required packages ==============================================
@@ -305,48 +298,106 @@ for (m in 1:length(Noon)) {#Injection des gap par p?riode d'un jours test
         # install.packages("packagename")
         library(openeddy)
         library(REddyProc)
+        # Documentation:
+        # https://www.bgc-jena.mpg.de/bgi/index.php/Services/REddyProcWebRPackage
+        # https://github.com/bgctw/REddyProc
+        # Data formatting description:
+        # https://www.bgc-jena.mpg.de/bgi/index.php/Services/REddyProcWebFormats
+        # Article:
+        # https://www.biogeosciences.net/15/5015/2018/
         
+        ### User defined variables =====================================================
         
+        # Firstly manually set the desired working directory in RStudio interface
+        # (typically it is the folder specifying the siteyear, e.g. BKF16)
+        # This assumes that the subdirectory structure is already present
+        # (i.e. the !Site_structure_template from the server)
         
+        name <- "Renaud_KOUKOUI" # person that performed processing
+        mail <- "renaudkoukoui@gmail.com" # mail of the person that performed processing
+        
+        # Set filenames, paths and arguments
         siteyear <- SitesID[n] # used as output filename and as 'ID.s' in sEddyProc$new()
         Tstamp <- format(Sys.time(), "%Y-%m-%d") # Timestamp of the computation
+        # (will be included in file names)
+        # (will be included in file names)
         path_out <- paste(path1,"Output_by_gap_percentage/",Percent_file[t],"/",sep="")
         
         pkg_version <- packageVersion("REddyProc")
         
         
         
-
+        
         if(n==1){
+          lat <- 9.791# edit site latitude
+          long <- 1.718 # edit site longtitude 
+          
+          input <- "G:/DOSSIERS RENAUD/anon-ms-example/Station_Base/Bellefoungou/Table/REddyProc_TableInput/DATA_test_REddyPro.csv"
+        }
+        if(n==2){
           lat <- 9.74# edit site latitude
           long <- 1.60 # edit site longtitude
-          input <- "G:/DOSSIERS RENAUD/anon-ms-example/French_version/MDS_Article/Tables/REddyProc_TableInput/DATA_test_REddyPro.csv"
+          input <- "G:/DOSSIERS RENAUD/anon-ms-example/Station_Base/Nalohou/Table/REddyProc_TableInput/DATA_test_REddyPro.csv"
           
         }
+        if(n==3){
+          lat <- 13.5311# edit site latitude
+          long <- 2.6613 # edit site longtitude
+          
+          input <- "G:/DOSSIERS RENAUD/anon-ms-example/Station_Base/BANIZOUMBOU/Table/REddyProc_TableInput/DATA_test_REddyPro.csv"
+        }
+        
         
         tz <- 1 # timezone
         # Include meteo variables that will be plotted, gap-filled and exported
         meteo <- c("Rg", "Tair", 'VPD')
+        # Temperature used for flux partitioning ('Tsoil' or 'Tair'). 
+        # Default: FP_temp <- 'Tsoil'
+        # NB: all other procedures are based on 'Tair'
+        FP_temp <- "Tair"
         # Show precheck plots in the console? Default: plot_to_console <- TRUE
         plot_to_console <- TRUE
-       # used when plotting to console (single year allowed)
+        #year <- 2008 # used when plotting to console (single year allowed)
         year <- 2008
         # Save plots as "png" (default) or "pdf"; NEEvsUStar plots are fixed to "pdf"
         plot_as <- "png" 
+        # Choose between seasonal ustar threshold (seasonal_ustar <- TRUE; default) 
+        # or annual thresholds (seasonal_ustar <- FALSE)
+        # Seasonal UT is recommended since it keeps more data (see manuscript).
+        # seasonal_ustar <- FALSE
+        # Should change-point detection (CPD) method (Barr et al. 2013) be used 
+        # (use_CPD <- TRUE) instead of classical approach (Reichstein et al. 2005, 
+        # Papale et al. 2006) using binned classes of ustar and temperature? 
+        # (use_CPD <- FALSE; default)
+        # The changepoint is estimated based on the entire subset within one season 
+        # and one temperature class; currently using argument 'isUsingCPTSeveralT' 
+        # of function usControlUstarEst()
+        # use_CPD <- TRUE
         
         ### Data preparation =============================================================
         
         # Load data with one header and one unit row from (tab-delimited) text file
         EddyData.F <- read_eddy(input, sep = ";")
         
-        Eddy_var_name<-c("Rh","Rg","Tair","Tsoil","VPD")
         
-        for (s in 1:length(Cycle_diurne_month_test)) {
+        #Eddy_var_name<-colnames(EddyData.F[,5:length(EddyData.F)])
+        Eddy_var_name<-c("Rh","Rg","Tair","Tsoil","VPD")
+        #Eddy_var_name<-sort(Eddy_var_name)
+        
+        for (s in 1:length(Cycle_diurne_month_test)) {#Injection des gap al?atoire %t aux indices de del pour chaque variable et pour le mois i
           at_gap<-del[,s]
-          
-          at_gap<-as.numeric(na.omit(at_gap))  
+          #Il y a des journ?e qui ont plutot commence ? 06:30 donc NA dans del
+          at_gap<-as.numeric(na.omit(at_gap))
           Q<-Eddy_var_name[s]
           EddyData.F[at_gap,Q]<-NA
+          
+          if(s==1) {
+            EddyData.F[at_gap,"Tair"]<-NA
+          }
+          if(s==3) {
+            EddyData.F[at_gap,"Rh"]<-NA
+          }
+          
         }
         
         # Add time stamp in POSIX time format
@@ -365,29 +416,264 @@ for (m in 1:length(Noon)) {#Injection des gap par p?riode d'un jours test
         
         # Meteo must be gap-filled even when without gaps to run the partitioning 
         for (met_var in variables) {#MDS Gap_filling
-          EddyProc.C$sMDSGapFill(met_var, FillAll = TRUE,suffix = paste(X_percent_suffix[t],"_",simulation[j], sep = "") )
+          EddyProc.C$sMDSGapFill(met_var, FillAll = TRUE,suffix = paste(X_percent_suffix[t], sep = "") )
         }
         
         Gapvalfill<-EddyProc.C$sExportResults()
-        FP_vars <- c(paste(variables,"_",X_percent_suffix[t],"_",simulation[j],"_f", sep = ""))
-        FP_varsd <- c(paste(variables,"_",X_percent_suffix[t],"_",simulation[j],"_fsd", sep = ""))
+        FP_vars <- c(paste(variables,"_",X_percent_suffix[t],"_f", sep = ""))
+        FP_varsd <- c(paste(variables,"_",X_percent_suffix[t],"_fsd", sep = ""))
         V_gap_101<-subset(Gapvalfill, select=FP_vars)#Recup?ration des colonne des variable gapfiller
         V_gap_101sd<-subset(Gapvalfill, select=FP_varsd)
         variables1<-c("Swin","Tair","Tsoil","HR","VPD")
-        colnames(V_gap_101)=c(paste(variables1,"_",X_percent_suffix[t],"_",simulation[j],"_f", sep = ""))#Refoematage qu nom de base
-        colnames(V_gap_101sd)=c(paste(variables1,"_",X_percent_suffix[t],"_",simulation[j],"_fsd", sep = ""))
-        
+        colnames(V_gap_101)=c(paste(variables1,"_",X_percent_suffix[t],"_f", sep = ""))#Refoematage qu nom de base
+        colnames(V_gap_101sd)=c(paste(variables1,"_",X_percent_suffix[t],"_fsd", sep = ""))
+        #Data_gapVal<-cbind(Data_gapVal,V_gap_101)
         XVal<-cbind(XVal,V_gap_101,V_gap_101sd)#Concatenation avec XVal
-        remove(V_gap_101,del,Gapvalfill)  
+        remove(V_gap_101,del,Gapvalfill) 
+        write.table(XVal,file=paste(path_out,Sites[n],"_artificial_gap_",Month_name[i],"_",X_percent_suffix[t],".csv",sep = ""),row.names = FALSE,sep = ";")#Sauvegade dans la direction
+        remove(XVal)
       }
-      write.table(XVal,file=paste(path_out,Sites[n],"_artificial_gap_",Month_name[i],"_",X_percent_suffix[t],".csv",sep = ""),row.names = FALSE,sep = ";")#Sauvegade dans la direction
-      remove(XVal)
       
-      
-      if(i==12){#test
-        beep(2) 
-      }
     }
+    else{
+      
+      for (i in 1:N) {#Choix du mois(jours test) d'injection du %t
+        Cycle_diurne_month_test<-Data_cyclediune_test[i,]# Recuperation de la ligne i de la data_frame contenant les cycle diurne test par variable pour chaque mois 
+        
+        Indice_list<-list()#Liste pour r?cupp?rer les indices des demis des jours test correspondant pour chaque variable(5 vecteurs dans la list)
+        
+        for(l in 1:length(Cycle_diurne_month_test)){#R?cuperation des indices par variable et stockage
+          A<-as.character(Cycle_diurne_month_test[l]) 
+          Indice<-which(Data_test$Date_only==A & Data_test$Day_or_nigth_1.2==m-1)
+          Indice_list[[l]]<-Indice
+        }
+        #Formatage en data frame
+        auxi<-max(sapply(Indice_list,length))
+        res<-sapply(Indice_list,function(u) c(u,rep(NA,auxi-length(u))))
+        res<-as.data.frame(res)
+        colnames(res)=Variable_names
+        Indice_list<-as.data.frame(res)
+        Indice_lenght <- nrow(Indice_list)
+        
+        numb_percent<- round(X_percent[t]*Indice_lenght/100)
+        
+        # Utilisation de la fonction gl pour créer les classes
+        if (Indice_lenght%%numb_percent==0){
+          bins <- gl(Indice_lenght/numb_percent, numb_percent, labels = 1:(Indice_lenght/numb_percent))
+        }
+        if (Indice_lenght%%numb_percent!=0) {
+          bins <- c(gl(round(Indice_lenght/numb_percent), numb_percent, labels = 1:round(Indice_lenght/numb_percent)))
+          bins <-as.vector(bins)
+          
+          if(Indice_lenght< length(bins)){
+            bins <- bins[-length(bins)]  
+          }
+          if(Indice_lenght >length(bins)){
+            bv <- Indice_lenght-length(bins)
+            
+            for (ij in 1:bv) {
+              bins[length(bins)+1] <- bins[length(bins)]
+            }
+            
+            
+          }
+          
+          
+          #bins <- c(gl(floor(Indice_lenght/numb_percent), numb_percent, labels = 1:floor(Indice_lenght/numb_percent)), floor(Indice_lenght/numb_percent))
+          
+          
+        }
+        
+        sim_num <- unique(bins)
+        Indice_list <- cbind(Indice_list,bins)
+        
+        simulation<-sim_num#Nombre de simulation ? effectuer
+        simulation<-as.character(simulation)
+        
+        XVal<-Data_test1#Data sans les valeurs de la logne 1(00:00)
+        
+        
+        for (j in 1:length(simulation)) {#Parcourt des simulations
+          # data_tenpercentnumber_day_1<-(length(Indice_list$HR)*X_percent[t])/100#Calcul du nombre d'indice correspondant a %t
+          
+          
+          del<-filter(Indice_list,bins==as.numeric(simulation[j]))
+          
+          
+          #   list()#Liste pour la r?cup?ration des indice s?lection?e al?atoirement pour chaque variable pour la simulation j et pour le jour i(nligne:data_tpercentnumber_day_1,ncolone:nombre de variable)     
+          # 
+          # for (s in 1:length(Cycle_diurne_month_test)) {#R?cuperation des indices par variable et stockage
+          #   del[[s]]<-sort(sample(Indice_list[,s],data_tenpercentnumber_day_1,replace = FALSE))
+          # }
+          # #Formatage en data frame  
+          # auxi<-max(sapply(del,length))
+          # res<-sapply(del,function(u) c(u,rep(NA,auxi-length(u))))
+          # res<-as.data.frame(res)
+          # colnames(res)=Variable_names
+          # del<-as.data.frame(res)
+          # 
+          
+          #############################################
+          # Artificial Gap filling#
+          #############################################
+          #setwd("/media/yaulande/Recreator/anon-ms-example/")
+          
+          
+          ### Loading the required packages ==============================================
+          
+          # You might need to install the packages first. In that case use:
+          # install.packages("packagename")
+          library(openeddy)
+          library(REddyProc)
+          # Documentation:
+          # https://www.bgc-jena.mpg.de/bgi/index.php/Services/REddyProcWebRPackage
+          # https://github.com/bgctw/REddyProc
+          # Data formatting description:
+          # https://www.bgc-jena.mpg.de/bgi/index.php/Services/REddyProcWebFormats
+          # Article:
+          # https://www.biogeosciences.net/15/5015/2018/
+          
+          ### User defined variables =====================================================
+          
+          # Firstly manually set the desired working directory in RStudio interface
+          # (typically it is the folder specifying the siteyear, e.g. BKF16)
+          # This assumes that the subdirectory structure is already present
+          # (i.e. the !Site_structure_template from the server)
+          
+          name <- "Renaud_KOUKOUI" # person that performed processing
+          mail <- "renaudkoukoui@gmail.com" # mail of the person that performed processing
+          
+          # Set filenames, paths and arguments
+          siteyear <- SitesID[n] # used as output filename and as 'ID.s' in sEddyProc$new()
+          Tstamp <- format(Sys.time(), "%Y-%m-%d") # Timestamp of the computation
+          # (will be included in file names)
+          # (will be included in file names)
+          path_out <- paste(path1,"Output_by_gap_percentage/",Percent_file[t],"/",sep="")
+          
+          pkg_version <- packageVersion("REddyProc")
+          
+          
+          
+          
+          if(n==1){
+            lat <- 9.791# edit site latitude
+            long <- 1.718 # edit site longtitude 
+            
+            input <- "G:/DOSSIERS RENAUD/anon-ms-example/Station_Base/Bellefoungou/Table/REddyProc_TableInput/DATA_test_REddyPro.csv"
+          }
+          if(n==2){
+            lat <- 9.74# edit site latitude
+            long <- 1.60 # edit site longtitude
+            input <- "G:/DOSSIERS RENAUD/anon-ms-example/Station_Base/Nalohou/Table/REddyProc_TableInput/DATA_test_REddyPro.csv"
+            
+          }
+          if(n==3){
+            lat <- 13.5311# edit site latitude
+            long <- 2.6613 # edit site longtitude
+            
+            input <- "G:/DOSSIERS RENAUD/anon-ms-example/Station_Base/BANIZOUMBOU/Table/REddyProc_TableInput/DATA_test_REddyPro.csv"
+          }
+          
+          
+          tz <- 1 # timezone
+          # Include meteo variables that will be plotted, gap-filled and exported
+          meteo <- c("Rg", "Tair", 'VPD')
+          # Temperature used for flux partitioning ('Tsoil' or 'Tair'). 
+          # Default: FP_temp <- 'Tsoil'
+          # NB: all other procedures are based on 'Tair'
+          FP_temp <- "Tair"
+          # Show precheck plots in the console? Default: plot_to_console <- TRUE
+          plot_to_console <- TRUE
+          #year <- 2008 # used when plotting to console (single year allowed)
+          year <- 2008
+          # Save plots as "png" (default) or "pdf"; NEEvsUStar plots are fixed to "pdf"
+          plot_as <- "png" 
+          # Choose between seasonal ustar threshold (seasonal_ustar <- TRUE; default) 
+          # or annual thresholds (seasonal_ustar <- FALSE)
+          # Seasonal UT is recommended since it keeps more data (see manuscript).
+          seasonal_ustar <- FALSE
+          # Should change-point detection (CPD) method (Barr et al. 2013) be used 
+          # (use_CPD <- TRUE) instead of classical approach (Reichstein et al. 2005, 
+          # Papale et al. 2006) using binned classes of ustar and temperature? 
+          # (use_CPD <- FALSE; default)
+          # The changepoint is estimated based on the entire subset within one season 
+          # and one temperature class; currently using argument 'isUsingCPTSeveralT' 
+          # of function usControlUstarEst()
+          use_CPD <- TRUE
+          
+          ### Data preparation =============================================================
+          
+          # Load data with one header and one unit row from (tab-delimited) text file
+          EddyData.F <- read_eddy(input, sep = ";")
+          
+          
+          #Eddy_var_name<-colnames(EddyData.F[,5:length(EddyData.F)])
+          Eddy_var_name<-c("Rh","Rg","Tair","Tsoil","VPD")
+          #Eddy_var_name<-sort(Eddy_var_name)
+          
+          for (s in 1:length(Cycle_diurne_month_test)) {#Injection des gap al?atoire %t aux indices de del pour chaque variable et pour le mois i
+            at_gap<-del[,s]
+            #Il y a des journ?e qui ont plutot commence ? 06:30 donc NA dans del
+            at_gap<-as.numeric(na.omit(at_gap))
+            Q<-Eddy_var_name[s]
+            EddyData.F[at_gap,Q]<-NA
+            
+            if(s==1) {
+              EddyData.F[at_gap,"Tair"]<-NA
+            }
+            if(s==3) {
+              EddyData.F[at_gap,"Rh"]<-NA
+            }
+            
+          }
+          
+          # Add time stamp in POSIX time format
+          EddyDataWithPosix.F <- fConvertTimeToPosix(
+            EddyData.F, 'YMDH', Year = 'Year', Day = 'Day', Hour = 'Hour',Month = 'Month')
+          
+          # Initalize R5 reference class sEddyProc for processing of eddy data
+          # with all variables needed for processing later
+          variables <- c("Rg","Tair","Tsoil","Rh","VPD")
+          EddyProc.C <- sEddyProc$new(siteyear, EddyDataWithPosix.F, variables)
+          EddyProc.C$sSetLocationInfo(lat, long, tz)  # site location info
+          
+          # See the content
+          str(EddyProc.C)
+          EddyProc.C$sPrintFrames(NumRows.i = 6L)
+          
+          # Meteo must be gap-filled even when without gaps to run the partitioning 
+          for (met_var in variables) {#MDS Gap_filling
+            EddyProc.C$sMDSGapFill(met_var, FillAll = TRUE,suffix = paste(X_percent_suffix[t],"_",simulation[j], sep = "") )
+          }
+          
+          Gapvalfill<-EddyProc.C$sExportResults()
+          FP_vars <- c(paste(variables,"_",X_percent_suffix[t],"_",simulation[j],"_f", sep = ""))
+          FP_varsd <- c(paste(variables,"_",X_percent_suffix[t],"_",simulation[j],"_fsd", sep = ""))
+          V_gap_101<-subset(Gapvalfill, select=FP_vars)#Recup?ration des colonne des variable gapfiller
+          V_gap_101sd<-subset(Gapvalfill, select=FP_varsd)
+          variables1<-c("Swin","Tair","Tsoil","HR","VPD")
+          colnames(V_gap_101)=c(paste(variables1,"_",X_percent_suffix[t],"_",simulation[j],"_f", sep = ""))#Refoematage qu nom de base
+          colnames(V_gap_101sd)=c(paste(variables1,"_",X_percent_suffix[t],"_",simulation[j],"_fsd", sep = ""))
+          #Data_gapVal<-cbind(Data_gapVal,V_gap_101)
+          XVal<-cbind(XVal,V_gap_101,V_gap_101sd)#Concatenation avec XVal
+          remove(V_gap_101,del,Gapvalfill)  
+        }
+        write.table(XVal,file=paste(path_out,Sites[n],"_artificial_gap_",Month_name[i],"_",X_percent_suffix[t],".csv",sep = ""),row.names = FALSE,sep = ";")#Sauvegade dans la direction
+        remove(XVal)
+        
+        
+        if(i==12){#test
+          beep(2) 
+        }
+      }  
+    }
+    
+    
+    
+    
+    
+    
+    
     
     if(t==length(X_percent)){#test
       beep(3)
@@ -401,7 +687,6 @@ for (m in 1:length(Noon)) {#Injection des gap par p?riode d'un jours test
   }
   
 }
-
 
 #######################################################################################
 #Calcule des moyenne des simulations
@@ -463,66 +748,149 @@ N<-12
 
 for (m in 1:length(Noon)) {
   
-  path1<-paste(path,"/Tables/MDS_Test/Cycle_diurne_test/Output_of_test/",Noon[m],"/",sep = "")
+  path1<-paste(path,Sites[n],"/Table/MDS_Test/Cycle_diurne_test/Output_of_test/",Noon[m],"/",sep = "")
   
   
-  X_percent<-c(50,60,70)
+  X_percent<-c(25,50,100)
   X_percent_suffix<-as.character(X_percent)
   Percent_file<-paste("Percent_",X_percent_suffix,sep="")
   
   pb_a<-txtProgressBar(min = 1,max = length(X_percent),style = 3)
   
   for (t in 1:length(X_percent)) {
+    if(t==3){
+      
+      for (i in 1:N) {
+        
+        path_in <- paste(path1,"Output_by_gap_percentage/",Percent_file[t],"/",sep="")
+        path_out <- paste(path1,"Output_by_PecentSimulation_mean/",Percent_file[t],"/",sep="")
+        
+        XVal<-Data_test
+        X<-read.csv(paste(path_in,Sites[n],"_artificial_gap_",Month_name[i],"_",X_percent_suffix[t],".csv",sep = ""),sep = ";")
+        
+        Output_1<-X
+        
+        write.table(Output_1,file=paste(path_out,Sites[n],"_artificial_gap_",Month_name[i],"_",X_percent_suffix[t],"_mean_with_error.csv",sep = ""),row.names = FALSE,sep = ";")
+        
+        
+        
+      }
+      
+      
+    }
     
-    for (i in 1:N) {
+    if(t!=3){
       
-      Output<-list()
-      Output_Error<-list()
-      path_in <- paste(path1,"Output_by_gap_percentage/",Percent_file[t],"/",sep="")
-      path_out <- paste(path1,"Output_by_PecentSimulation_mean/",Percent_file[t],"/",sep="")
-      
-      XVal<-Data_test
-      X<-read.csv(paste(path_in,Sites[n],"_artificial_gap_",Month_name[i],"_",X_percent_suffix[t],".csv",sep = ""),sep = ";")
-      
-      for (k in 1:length(Variable_names)) {
-        FP_vars<-paste(Variable_names[k],"_",X_percent_suffix[t],"_",simulation,"_f",sep="")
-        X_sub<-subset(X, select=FP_vars)
-        X_sub_vect<-c()
-        Error_vec<-c()
-        for (p in 1:nrow(X_sub)) {
-          vect<-unname(unlist(X_sub[p,]))
-          le<-length(simulation)
-          X_sub_vect[p]<-mean(vect)
-          Error_vec[p]<-round(qt(0.975,df=le-1)*sqrt(var(vect))/sqrt(le),3)  
+      for (i in 1:N) {
+        
+        Cycle_diurne_month_test<-Data_cyclediune_test[i,]# Recuperation de la ligne i de la data_frame contenant les cycle diurne test par variable pour chaque mois 
+        
+        Indice_list<-list()#Liste pour r?cupp?rer les indices des demis des jours test correspondant pour chaque variable(5 vecteurs dans la list)
+        
+        for(l in 1:length(Cycle_diurne_month_test)){#R?cuperation des indices par variable et stockage
+          A<-as.character(Cycle_diurne_month_test[l]) 
+          Indice<-which(Data_test$Date_only==A & Data_test$Day_or_nigth_1.2==m-1)
+          Indice_list[[l]]<-Indice
+        }
+        #Formatage en data frame
+        auxi<-max(sapply(Indice_list,length))
+        res<-sapply(Indice_list,function(u) c(u,rep(NA,auxi-length(u))))
+        res<-as.data.frame(res)
+        colnames(res)=Variable_names
+        Indice_list<-as.data.frame(res)
+        Indice_lenght <- nrow(Indice_list)
+        
+        numb_percent<- round(X_percent[t]*Indice_lenght/100)
+        
+        # Utilisation de la fonction gl pour créer les classes
+        if (Indice_lenght%%numb_percent==0){
+          bins <- gl(Indice_lenght/numb_percent, numb_percent, labels = 1:(Indice_lenght/numb_percent))
+        }
+        if (Indice_lenght%%numb_percent!=0) {
+          bins <- c(gl(round(Indice_lenght/numb_percent), numb_percent, labels = 1:round(Indice_lenght/numb_percent)))
+          bins <-as.vector(bins)
+          
+          if(Indice_lenght< length(bins)){
+            bins <- bins[-length(bins)]  
+          }
+          if(Indice_lenght >length(bins)){
+            bv <- Indice_lenght-length(bins)
+            
+            for (ij in 1:bv) {
+              bins[length(bins)+1] <- bins[length(bins)]
+            }
+            
+            
+          }
+          
+          
+          #bins <- c(gl(floor(Indice_lenght/numb_percent), numb_percent, labels = 1:floor(Indice_lenght/numb_percent)), floor(Indice_lenght/numb_percent))
+          
           
         }
         
+        sim_num <- unique(bins)
+        Indice_list <- cbind(Indice_list,bins)
         
-        Output[[k]]<-X_sub_vect
-        Output_Error[[k]]<-Error_vec
+        simulation<-sim_num#Nombre de simulation ? effectuer
+        simulation<-as.character(simulation)
         
+        
+        
+        Output<-list()
+        Output_Error<-list()
+        path_in <- paste(path1,"Output_by_gap_percentage/",Percent_file[t],"/",sep="")
+        path_out <- paste(path1,"Output_by_PecentSimulation_mean/",Percent_file[t],"/",sep="")
+        
+        XVal<-Data_test
+        X<-read.csv(paste(path_in,Sites[n],"_artificial_gap_",Month_name[i],"_",X_percent_suffix[t],".csv",sep = ""),sep = ";")
+        
+        for (k in 1:length(Variable_names)) {
+          FP_vars<-paste(Variable_names[k],"_",X_percent_suffix[t],"_",simulation,"_f",sep="")
+          X_sub<-subset(X, select=FP_vars)
+          X_sub_vect<-c()
+          Error_vec<-c()
+          for (p in 1:nrow(X_sub)) {
+            vect<-unname(unlist(X_sub[p,]))
+            le<-length(simulation)
+            X_sub_vect[p]<-mean(vect)
+            Error_vec[p]<-round(qt(0.975,df=le-1)*sqrt(var(vect))/sqrt(le),3)  
+            
+          }
+          
+          # X_sub<-t(X_sub)
+          # X_sub_mean<-colMeans(X_sub)
+          # X_sub_mean<-as.numeric(X_sub_mean)
+          #Output[[k]]<-X_sub_mean
+          Output[[k]]<-X_sub_vect
+          Output_Error[[k]]<-Error_vec
+          
+        }
+        auxi<-max(sapply(Output,length))
+        res<-sapply(Output,function(u) c(u,rep(NA,auxi-length(u))))
+        res<-as.data.frame(res)
+        colnames(res)=paste(Variable_names,"_",X_percent_suffix[t],"_f",sep="")
+        
+        auxi1<-max(sapply(Output_Error,length))
+        res1<-sapply(Output_Error,function(u) c(u,rep(NA,auxi-length(u))))
+        res1<-as.data.frame(res1)
+        colnames(res1)=paste(Variable_names,"_",X_percent_suffix[t],"_error_f",sep="")
+        
+        
+        Output_1<-cbind(XVal,res,res1)
+        
+        write.table(Output_1,file=paste(path_out,Sites[n],"_artificial_gap_",Month_name[i],"_",X_percent_suffix[t],"_mean_with_error.csv",sep = ""),row.names = FALSE,sep = ";")
+        remove(XVal)
+        
+        
+        if(i==12){
+          beep(2) 
+        }
       }
-      auxi<-max(sapply(Output,length))
-      res<-sapply(Output,function(u) c(u,rep(NA,auxi-length(u))))
-      res<-as.data.frame(res)
-      colnames(res)=paste(Variable_names,"_",X_percent_suffix[t],"_f",sep="")
       
-      auxi1<-max(sapply(Output_Error,length))
-      res1<-sapply(Output_Error,function(u) c(u,rep(NA,auxi-length(u))))
-      res1<-as.data.frame(res1)
-      colnames(res1)=paste(Variable_names,"_",X_percent_suffix[t],"_error_f",sep="")
-      
-      
-      Output_1<-cbind(XVal,res,res1)
-      
-      write.table(Output_1,file=paste(path_out,Sites[n],"_artificial_gap_",Month_name[i],"_",X_percent_suffix[t],"_mean_with_error.csv",sep = ""),row.names = FALSE,sep = ";")
-      remove(XVal)
-      
-      
-      if(i==12){
-        beep(2) 
-      }
     }
+    
+    
     if(t==length(X_percent)){
       beep(3)
     }
@@ -608,38 +976,72 @@ N<-12
 
 X<-NULL
 for (m in 1:length(Noon)) {
-  path1<-paste(path,"Tables/MDS_Test/Cycle_diurne_test/Output_of_test/",Noon[m],"/",sep = "")
+  path1<-paste(path,Sites[n],"/Table/MDS_Test/Cycle_diurne_test/Output_of_test/",Noon[m],"/",sep = "")
   path_in<-paste(path1,"Output_by_PecentSimulation_mean/",sep = "")
-  X_percent<-c(50,60,70)
+  X_percent<-c(25,50,100)
   X_percent_suffix<-as.character(X_percent)
   Percent_file<-paste("Percent_",X_percent_suffix,sep="")
   
   for (t in 1:length(X_percent)) {
     
+    
+    
     Output_list_rmse<-list()
-    Output_list_mean<-list()
+    Output_list_var<-list()
+    Output_list_mae<-list()
     Output_list_BE<-list()
     Output_list_DSE<-list()
+    Output_list_mse<-list()
+    Output_list_IoAd<-list()
+    Output_list_MEF<-list()
     Output_list_RSR<-list()
+    Output_list_RVE<-list()
+    Output_list_R2<-list()
     Output_list_PBE<-list()
+    
+    month_num<-c(1:12)
+    Month_name_eng <- as.character(month(month_num,label = TRUE,abbr = FALSE,Sys.setlocale("LC_TIME", "English")))
+    Month_name<-as.character(month(month_num,label = TRUE,abbr = FALSE,Sys.setlocale("LC_TIME", "French")))
+    Month_nameID<-c("01","02","03","04","05","06","07","08","09","10","11","12")
+    Month_name<-str_replace_all(Month_name, pattern = "<e9>", replacement = "é")
+    Month_name<-str_replace_all(Month_name, pattern = "<fb>", replacement = "û")
+    
+    if(t==3){
+      Month_name <- Month_name_eng
+    }
+    
     
     for (i in 1:N) {
       Data_month<-read.csv(paste(path_in,Percent_file[t],"/",Sites[n],"_artificial_gap_",Month_name[i],"_",X_percent_suffix[t],"_mean_with_error.csv",sep = ""),sep = ";") 
       
       Output_var_rmse<-c()
+      Output_var_var<-c()
+      Output_var_mae<-c()
       Output_var_BE<-c()
       Output_var_PBE<-c()
       Output_var_DSE<-c()
+      Output_var_mse<-c()
+      Output_var_sum<-c()
       Output_var_mean<-c()
+      Output_var_MEF<-c()
       Output_var_RSR<-c()
-      
+      Output_var_RVE<-c()
+      Output_var_IoAd<-c()
+      Output_var_R2<-c()
       for (k in 1:length(Variable_names)) {
         Date <- Data_cyclediune_test[i,Variable_names[k]]
         Table_month <- filter(Data_month,Date_only==Date,Day_or_nigth_1.2==m-1)
         
         Output_var_rmse[k]<-rmse(Table_month[,Variable_names[k]],Table_month[,paste(Variable_names1[k],"_",X_percent_suffix[t],"_f",sep = "")])
+        Output_var_var[k]<-var(Table_month[,Variable_names[k]],Table_month[,paste(Variable_names1[k],"_",X_percent_suffix[t],"_f",sep = "")])
+        Output_var_mae[k]<-mae(Table_month[,Variable_names[k]],Table_month[,paste(Variable_names1[k],"_",X_percent_suffix[t],"_f",sep = "")])
         Output_var_BE[k]<-bias(Table_month[,Variable_names[k]],Table_month[,paste(Variable_names1[k],"_",X_percent_suffix[t],"_f",sep = "")])
+        Output_var_mse[k]<-mse(Table_month[,Variable_names[k]],Table_month[,paste(Variable_names1[k],"_",X_percent_suffix[t],"_f",sep = "")])
+        Output_var_sum[k]<-sum(Table_month[,Variable_names[k]])
         Output_var_mean[k]<-mean(Table_month[,Variable_names[k]])
+        Output_var_IoAd[k]<-d(Table_month[,paste(Variable_names1[k],"_",X_percent_suffix[t],"_f",sep = "")],Table_month[,Variable_names[k]])
+        Output_var_R2[k]<-cor(Table_month[,paste(Variable_names1[k],"_",X_percent_suffix[t],"_f",sep = "")],Table_month[,Variable_names[k]])
+        Output_var_MEF[k]<-NSE(Table_month[,paste(Variable_names1[k],"_",X_percent_suffix[t],"_f",sep = "")],Table_month[,Variable_names[k]])
         Output_var_RSR[k]<-rsr(Table_month[,paste(Variable_names1[k],"_",X_percent_suffix[t],"_f",sep = "")],Table_month[,Variable_names[k]])
         # 
         m1<-t(Table_month[,Variable_names[k]])
@@ -648,16 +1050,30 @@ for (m in 1:length(Noon)) {
         Entropy<-EntropyExplorer(m1,m2,dmetric = "dse",otype = "v",shift = c("auto","auto"))
         # 
         Output_var_DSE[k]<-abs(Entropy[,3]) 
+        Output_var_RVE[k]<- Output_var_BE[k]/Output_var_sum[k]
         Output_var_PBE[k]<-(Output_var_BE[k]/Output_var_mean[k])*100
         
+        # 
+        
       }
-       
-      Output_list_rmse[[i]]<-Output_var_rmse
+      #Output_var_MEF<- (1-(Output_var_mse/Output_var_var))*100
+      #Output_var_RSR<- (Output_var_rmse/sqrt(Output_var_var))*100 
       
+      # 
+      # 
+      # 
+      Output_list_rmse[[i]]<-Output_var_rmse
+      Output_list_var[[i]]<-Output_var_var
+      Output_list_mae[[i]]<-Output_var_mae
       Output_list_BE[[i]]<-Output_var_BE
       Output_list_PBE[[i]]<-round(Output_var_PBE,1) 
+      Output_list_mse[[i]]<-Output_var_mse
       Output_list_DSE[[i]]<-Output_var_DSE
-      Output_list_RSR[[i]]<-round(Output_var_RSR,2)
+      Output_list_MEF[[i]]<-Output_var_MEF
+      Output_list_RSR[[i]]<-round(Output_var_RSR,2) 
+      Output_list_RVE[[i]]<-Output_var_RVE
+      Output_list_IoAd[[i]]<-Output_var_IoAd
+      Output_list_R2[[i]]<-Output_var_R2
     }
     
     auxi<-max(sapply(Output_list_rmse,length))
@@ -666,6 +1082,20 @@ for (m in 1:length(Noon)) {
     colnames(res)=paste("RMSE_",X_percent_suffix[t],"_",NoonID[m],"_",Month_nameID,sep = "")         
     rownames(res)=Variable_names
     Output_frame_rmse<-res
+    
+    auxi<-max(sapply(Output_list_var,length))
+    res<-sapply(Output_list_var,function(u) c(u,rep(NA,auxi-length(u))))
+    res<-as.data.frame(res)
+    colnames(res)=paste("VAR_",X_percent_suffix[t],"_",NoonID[m],"_",Month_nameID,sep = "")         
+    rownames(res)=Variable_names
+    Output_frame_var<-res
+    
+    auxi<-max(sapply(Output_list_mae,length))
+    res<-sapply(Output_list_mae,function(u) c(u,rep(NA,auxi-length(u))))
+    res<-as.data.frame(res)
+    colnames(res)=paste("MAE_",X_percent_suffix[t],"_",NoonID[m],"_",Month_nameID,sep = "")         
+    rownames(res)=Variable_names
+    Output_frame_mae<-res
     
     auxi<-max(sapply(Output_list_BE,length))
     res<-sapply(Output_list_BE,function(u) c(u,rep(NA,auxi-length(u))))
@@ -689,6 +1119,19 @@ for (m in 1:length(Noon)) {
     rownames(res)=Variable_names
     Output_frame_DSE<-res
     
+    auxi<-max(sapply(Output_list_mse,length))
+    res<-sapply(Output_list_mse,function(u) c(u,rep(NA,auxi-length(u))))
+    res<-as.data.frame(res)
+    colnames(res)=paste("MSE_",X_percent_suffix[t],"_",NoonID[m],"_",Month_nameID,sep = "")         
+    rownames(res)=Variable_names
+    Output_frame_MSE<-res
+    
+    auxi<-max(sapply(Output_list_MEF,length))
+    res<-sapply(Output_list_MEF,function(u) c(u,rep(NA,auxi-length(u))))
+    res<-as.data.frame(res)
+    colnames(res)=paste("MEF_",X_percent_suffix[t],"_",NoonID[m],"_",Month_nameID,sep = "")         
+    rownames(res)=Variable_names
+    Output_frame_MEF<-res
     
     auxi<-max(sapply(Output_list_RSR,length))
     res<-sapply(Output_list_RSR,function(u) c(u,rep(NA,auxi-length(u))))
@@ -697,18 +1140,33 @@ for (m in 1:length(Noon)) {
     rownames(res)=Variable_names
     Output_frame_RSR<-res
     
+    auxi<-max(sapply(Output_list_RVE,length))
+    res<-sapply(Output_list_RVE,function(u) c(u,rep(NA,auxi-length(u))))
+    res<-as.data.frame(res)
+    colnames(res)=paste("RVR_",X_percent_suffix[t],"_",NoonID[m],"_",Month_nameID,sep = "")         
+    rownames(res)=Variable_names
+    Output_frame_RVR<-res
     
+    auxi<-max(sapply(Output_list_IoAd,length))
+    res<-sapply(Output_list_IoAd,function(u) c(u,rep(NA,auxi-length(u))))
+    res<-as.data.frame(res)
+    colnames(res)=paste("IoAd_",X_percent_suffix[t],"_",NoonID[m],"_",Month_nameID,sep = "")         
+    rownames(res)=Variable_names
+    Output_frame_IoAd<-res
     
-    
-    
-    
+    auxi<-max(sapply(Output_list_R2,length))
+    res<-sapply(Output_list_R2,function(u) c(u,rep(NA,auxi-length(u))))
+    res<-as.data.frame(res)
+    colnames(res)=paste("R2_",X_percent_suffix[t],"_",NoonID[m],"_",Month_nameID,sep = "")         
+    rownames(res)=Variable_names
+    Output_frame_R2<-res
     
     if(is.null(X)){
-      X<-cbind(Output_frame_PBE,Output_frame_DSE,Output_frame_RSR)
+      X<-cbind(Output_frame_rmse,Output_frame_var,Output_frame_mae,Output_frame_BE,Output_frame_PBE,Output_frame_DSE,Output_frame_MSE,Output_frame_MEF,Output_frame_RSR,Output_frame_RVR,Output_frame_IoAd,Output_frame_R2)
       
     }
     else{
-      X<-cbind(X,Output_frame_PBE,Output_frame_DSE,Output_frame_RSR)
+      X<-cbind(X,Output_frame_rmse,Output_frame_var,Output_frame_mae,Output_frame_BE,Output_frame_PBE,Output_frame_DSE,Output_frame_MSE,Output_frame_MEF,Output_frame_RSR,Output_frame_RVR,Output_frame_IoAd,Output_frame_R2)
     }
     
     
@@ -776,9 +1234,9 @@ Mois<-month(DateUTC)
 Data_test<-cbind(DateUTC,Mois,subset(Data_test,select =Variable_names),DATA08)
 
 Saisons<-c()
-x<-as.Date(as.Date("2008-05-01"):as.Date("2008-10-19"),origin="1970-01-01")
-y<-as.Date(as.Date("2007-12-20"):as.Date("2008-02-23"),origin="1970-01-01")
-z<-as.Date(as.Date("2008-12-27"):as.Date("2009-01-26"),origin="1970-01-01")
+x<-as.Date(as.Date("2008-05-01"):as.Date("2008-10-31"),origin="1970-01-01")
+y<-as.Date(as.Date("2007-12-20"):as.Date("2008-04-30"),origin="1970-01-01")
+z<-as.Date(as.Date("2008-11-01"):as.Date("2009-01-26"),origin="1970-01-01")
 for (i in 1:length(Data_test$DateUTC)) {
   if(is.element(Data_test$DateUTC[i],x)){
     Saisons[i]<-1
@@ -790,7 +1248,7 @@ for (i in 1:length(Data_test$DateUTC)) {
     Saisons[i]<-0
   }
   else{
-    Saisons[i]<-3
+    Saisons[i]<-0
   }
 }
 
@@ -862,8 +1320,8 @@ Seas<-c("Wet_Season","Dry_Season")#Vecteur  de stockage des noms des diff?rent p
 set.seed(0852)#Pour rendre reproductif ? l'avenir
 
 for (m in 1:length(Seas)) {
-  path1<-paste(path,"Tables/MDS_Test/Season_test/Output_of_test/",Seas[m],"/",sep = "")
-  X_percent<-c(50,60,70)
+  path1<-paste(path,Sites[n],"/Table/MDS_Test/Season_test/Output_of_test/",Seas[m],"/",sep = "")
+  X_percent<-c(25,50,100)
   X_percent_suffix<-as.character(X_percent)#Chargement des diff?rent pourcentage
   Percent_file<-paste("Percent_",X_percent_suffix,sep="")#Nom des dossiers pour chaque pourcentage d'injection de gap par p?riode de la journ?e
   
@@ -871,117 +1329,349 @@ for (m in 1:length(Seas)) {
   
   for (t in 1:length(X_percent)) {
     
-    if(m==1){
-      Indices<-which(Data_test$Mois==Output_month_test$Wet_Season,arr.ind = T)
-    }
-    if(m==2){
-      Indices<-which(Data_test$Mois==Output_month_test$Dry_Season,arr.ind = T)
+    if(t==3){
+      
+      
+      if(m==1){
+        Indices<-which(Data_test$Mois==Output_month_test$Wet_Season,arr.ind = T)
+      }
+      
+      if(m==2){
+        Indices<-which(Data_test$Mois==Output_month_test$Dry_Season,arr.ind = T)
         
-    }
-    simulation<-c(1:4)#Nombre de simulation ? effectuer
-    simulation<-as.character(simulation)
-    
-    XVal<-Data_test#Data sans les valeurs de la logne 1(00:00)
-    for (j in 1:length(simulation)) {
-      data_tenpercentnumber_day_1<-(length(Indices)*X_percent[t])/100
-      del<-sort(sample(Indices,data_tenpercentnumber_day_1,replace = FALSE))
+      }
       
-      #############################################
-      # Artificial Gap filling#
-      #############################################
-      #setwd("/media/yaulande/Recreator/anon-ms-example/")
+      XVal<-Data_test#Data sans les valeurs de la logne 1(00:00)
       
       
-      ### Loading the required packages ==============================================
-      
-      # You might need to install the packages first. In that case use:
-      # install.packages("packagename")
+      #Eddy_var_name<-colnames(EddyData.F[,5:length(EddyData.F)])
+      Eddy_var_name<-c("Rh","Rg","Tair","Tsoil","VPD")
+      # Initalize R5 reference class sEddyProc for processing of eddy data
+      # with all variables needed for processing later
+      variables <- c("Rg","Tair","Tsoil","Rh","VPD")
+      variables1<-c("HR","Swin","Tair","Tsoil","VPD")
+      #Eddy_var_name<-sort(Eddy_var_name)
       library(openeddy)
       library(REddyProc)
-      
-      
       
       # Set filenames, paths and arguments
       siteyear <- SitesID[n] # used as output filename and as 'ID.s' in sEddyProc$new()
       Tstamp <- format(Sys.time(), "%Y-%m-%d") # Timestamp of the computation
-      
+      # (will be included in file names)
+      # (will be included in file names)
       path_out <- paste(path1,"Output_by_gap_percentage/",Percent_file[t],"/",sep="")
       
       pkg_version <- packageVersion("REddyProc")
       
-      if(n==1){
-        input <- "G:/DOSSIERS RENAUD/anon-ms-example/French_version/MDS_Article/Tables/REddyProc_TableInput/DATA_test_REddyPro.csv"
-        lat <- 9.74484# edit site latitude
-        long <- 1.60457 # edit site longtitude
-          
-      }
+      
+      
+      
+      
+      lat <- 9.74# edit site latitude
+      long <- 1.60 # edit site longtitude
+      input <- "G:/DOSSIERS RENAUD/anon-ms-example/French_version/MDS_Article/Tables/REddyProc_TableInput/DATA_test_REddyPro.csv"  
+      
+      
       
       tz <- 1 # timezone
       # Include meteo variables that will be plotted, gap-filled and exported
       meteo <- c("Rg", "Tair", 'VPD')
-      
+      # Temperature used for flux partitioning ('Tsoil' or 'Tair'). 
+      # Default: FP_temp <- 'Tsoil'
+      # NB: all other procedures are based on 'Tair'
+      FP_temp <- "Tair"
+      # Show precheck plots in the console? Default: plot_to_console <- TRUE
       plot_to_console <- TRUE
-      year <- 2008 # used when plotting to console (single year allowed)
+      #year <- 2008 # used when plotting to console (single year allowed)
+      year <- 2008
       # Save plots as "png" (default) or "pdf"; NEEvsUStar plots are fixed to "pdf"
       plot_as <- "png" 
+      # Choose between seasonal ustar threshold (seasonal_ustar <- TRUE; default) 
+      # or annual thresholds (seasonal_ustar <- FALSE)
+      # Seasonal UT is recommended since it keeps more data (see manuscript).
+      seasonal_ustar <- FALSE
+      # Should change-point detection (CPD) method (Barr et al. 2013) be used 
+      # (use_CPD <- TRUE) instead of classical approach (Reichstein et al. 2005, 
+      # Papale et al. 2006) using binned classes of ustar and temperature? 
+      # (use_CPD <- FALSE; default)
+      # The changepoint is estimated based on the entire subset within one season 
+      # and one temperature class; currently using argument 'isUsingCPTSeveralT' 
+      # of function usControlUstarEst()
+      use_CPD <- TRUE
       
       ### Data preparation =============================================================
+      
+      #Parcourt des simulations
+      # data_tenpercentnumber_day_1<-(length(Indice_list$HR)*X_percent[t])/100#Calcul du nombre d'indice correspondant a %t
+      
+      
+      del<-Indices
+      
+      
+      
+      
       
       # Load data with one header and one unit row from (tab-delimited) text file
       EddyData.F <- read_eddy(input, sep = ";")
       
       
       
-      Eddy_var_name<-c("Rh","Rg","Tair","Tsoil","VPD")
-      
       for (s in 1:length(Eddy_var_name)) {#Injection des gap al?atoire %t aux indices de del pour chaque variable et pour le mois i
+        at_gap<-del
+        #Il y a des journ?e qui ont plutot commence ? 06:30 donc NA dans del
+        at_gap<-as.numeric(na.omit(at_gap))
         Q<-Eddy_var_name[s]
-        EddyData.F[del,Q]<-NA
+        EddyData.F[at_gap,Q]<-NA
+        
+        if(s==1) {
+          EddyData.F[at_gap,"Tair"]<-NA
+        }
+        if(s==3) {
+          EddyData.F[at_gap,"Rh"]<-NA
+        }
+        
+        # Add time stamp in POSIX time format
+        EddyDataWithPosix.F <- fConvertTimeToPosix(
+          EddyData.F, 'YMDH', Year = 'Year', Day = 'Day', Hour = 'Hour',Month = 'Month')
+        
+        
+        EddyProc.C <- sEddyProc$new(siteyear, EddyDataWithPosix.F, variables)
+        EddyProc.C$sSetLocationInfo(lat, long, tz)  # site location info
+        
+        # See the content
+        str(EddyProc.C)
+        EddyProc.C$sPrintFrames(NumRows.i = 6L)
+        # Meteo must be gap-filled even when without gaps to run the partitioning 
+        for (met_var in variables) {#MDS Gap_filling
+          EddyProc.C$sMDSGapFill(met_var, FillAll = TRUE,suffix = paste(X_percent_suffix[t], sep = "") )
+        }
+        
+        Gapvalfill<-EddyProc.C$sExportResults()
+        FP_vars <- c(paste(Eddy_var_name[s],"_",X_percent_suffix[t],"_f", sep = ""))
+        FP_varsd <- c(paste(Eddy_var_name[s],"_",X_percent_suffix[t],"_fsd", sep = ""))
+        V_gap_101<-subset(Gapvalfill, select=FP_vars)#Recup?ration des colonne des variable gapfiller
+        V_gap_101sd<-subset(Gapvalfill, select=FP_varsd)
+        colnames(V_gap_101)=c(paste(variables1[s],"_",X_percent_suffix[t],"_f", sep = ""))#Refoematage qu nom de base
+        colnames(V_gap_101sd)=c(paste(variables1[s],"_",X_percent_suffix[t],"_fsd", sep = ""))
+        #Data_gapVal<-cbind(Data_gapVal,V_gap_101)
+        XVal<-cbind(XVal,V_gap_101,V_gap_101sd)#Concatenation avec XVal
+        remove(V_gap_101,Gapvalfill)
+        
+      }
+      write.table(XVal,file=paste(path_out,Sites[n],"_artificial_gap_",X_percent_suffix[t],"_1_2.csv",sep = ""),row.names = FALSE,sep = ";")#Sauvegade dans la direction
+      remove(XVal)
+      
+      
+      
+      
+      
+    }
+    
+    if(t!=3){
+      
+      if(m==1){
+        Indices<-which(Data_test$Mois==Output_month_test$Wet_Season,arr.ind = T)
       }
       
-      # Add time stamp in POSIX time format
-      EddyDataWithPosix.F <- fConvertTimeToPosix(
-        EddyData.F, 'YMDH', Year = 'Year', Day = 'Day', Hour = 'Hour',Month = 'Month')
+      if(m==2){
+        Indices<-which(Data_test$Mois==Output_month_test$Dry_Season,arr.ind = T)
+        
+      }
       
+      Indice_list <- data.frame(matrix(0, nrow = length(Indices), ncol =length(Variable[3:8]) ))
+      colnames(Indice_list) <- Variable[3:8]
+      Indice_lenght <- nrow(Indice_list)
+      
+      for (ty in 1:ncol(Indice_list)) {
+        Indice_list[,ty] <- Indices
+      }
+      
+      
+      numb_percent<- round(X_percent[t]*Indice_lenght/100)
+      
+      if (Indice_lenght%%numb_percent==0){
+        bins <- gl(Indice_lenght/numb_percent, numb_percent, labels = 1:(Indice_lenght/numb_percent))
+      }
+      if (Indice_lenght%%numb_percent!=0) {
+        bins <- c(gl(round(Indice_lenght/numb_percent), numb_percent, labels = 1:round(Indice_lenght/numb_percent)))
+        bins <-as.vector(bins)
+        
+        if(Indice_lenght< length(bins)){
+          bins <- bins[-length(bins)]  
+        }
+        if(Indice_lenght >length(bins)){
+          bv <- Indice_lenght-length(bins)
+          
+          for (ij in 1:bv) {
+            bins[length(bins)+1] <- bins[length(bins)]
+          }
+          
+          
+        }
+        
+        
+        #bins <- c(gl(floor(Indice_lenght/numb_percent), numb_percent, labels = 1:floor(Indice_lenght/numb_percent)), floor(Indice_lenght/numb_percent))
+        
+        
+      }
+      
+      sim_num <- unique(bins)
+      Indice_list <- cbind(Indice_list,bins)
+      
+      simulation<-sim_num#Nombre de simulation ? effectuer
+      simulation<-as.character(simulation)
+      XVal<-Data_test#Data sans les valeurs de la logne 1(00:00)
+      
+      
+      #Eddy_var_name<-colnames(EddyData.F[,5:length(EddyData.F)])
+      Eddy_var_name<-c("Rh","Rg","Tair","Tsoil","VPD")
       # Initalize R5 reference class sEddyProc for processing of eddy data
       # with all variables needed for processing later
       variables <- c("Rg","Tair","Tsoil","Rh","VPD")
-      EddyProc.C <- sEddyProc$new(siteyear, EddyDataWithPosix.F, variables)
-      EddyProc.C$sSetLocationInfo(lat, long, tz)  # site location info
+      variables1<-c("HR","Swin","Tair","Tsoil","VPD")
+      #Eddy_var_name<-sort(Eddy_var_name)
+      library(openeddy)
+      library(REddyProc)
       
-      # See the content
-      str(EddyProc.C)
-      EddyProc.C$sPrintFrames(NumRows.i = 6L)
+      # Set filenames, paths and arguments
+      siteyear <- SitesID[n] # used as output filename and as 'ID.s' in sEddyProc$new()
+      Tstamp <- format(Sys.time(), "%Y-%m-%d") # Timestamp of the computation
+      # (will be included in file names)
+      # (will be included in file names)
+      path_out <- paste(path1,"Output_by_gap_percentage/",Percent_file[t],"/",sep="")
       
-      # Meteo must be gap-filled even when without gaps to run the partitioning 
-      for (met_var in variables) {#MDS Gap_filling
-        EddyProc.C$sMDSGapFill(met_var, FillAll = TRUE,suffix = paste(X_percent_suffix[t],"_",simulation[j], sep = "") )
+      pkg_version <- packageVersion("REddyProc")
+      
+      
+      
+      
+      
+      
+      lat <- 9.74# edit site latitude
+      long <- 1.60 # edit site longtitude
+      input <- "G:/DOSSIERS RENAUD/anon-ms-example/French_version/MDS_Article/Tables/REddyProc_TableInput/DATA_test_REddyPro.csv"
+      
+      
+      
+      
+      tz <- 1 # timezone
+      # Include meteo variables that will be plotted, gap-filled and exported
+      meteo <- c("Rg", "Tair", 'VPD')
+      # Temperature used for flux partitioning ('Tsoil' or 'Tair'). 
+      # Default: FP_temp <- 'Tsoil'
+      # NB: all other procedures are based on 'Tair'
+      FP_temp <- "Tair"
+      # Show precheck plots in the console? Default: plot_to_console <- TRUE
+      plot_to_console <- TRUE
+      #year <- 2008 # used when plotting to console (single year allowed)
+      year <- 2008
+      # Save plots as "png" (default) or "pdf"; NEEvsUStar plots are fixed to "pdf"
+      plot_as <- "png" 
+      # Choose between seasonal ustar threshold (seasonal_ustar <- TRUE; default) 
+      # or annual thresholds (seasonal_ustar <- FALSE)
+      # Seasonal UT is recommended since it keeps more data (see manuscript).
+      seasonal_ustar <- FALSE
+      # Should change-point detection (CPD) method (Barr et al. 2013) be used 
+      # (use_CPD <- TRUE) instead of classical approach (Reichstein et al. 2005, 
+      # Papale et al. 2006) using binned classes of ustar and temperature? 
+      # (use_CPD <- FALSE; default)
+      # The changepoint is estimated based on the entire subset within one season 
+      # and one temperature class; currently using argument 'isUsingCPTSeveralT' 
+      # of function usControlUstarEst()
+      use_CPD <- TRUE
+      
+      ### Data preparation =============================================================
+      
+      for (j in 1:length(simulation)) {#Parcourt des simulations
+        # data_tenpercentnumber_day_1<-(length(Indice_list$HR)*X_percent[t])/100#Calcul du nombre d'indice correspondant a %t
+        
+        
+        del<-filter(Indice_list,bins==as.numeric(simulation[j]))
+        
+        
+        
+        
+        
+        # Load data with one header and one unit row from (tab-delimited) text file
+        EddyData.F <- read_eddy(input, sep = ";")
+        
+        
+        
+        for (s in 1:length(Eddy_var_name)) {#Injection des gap al?atoire %t aux indices de del pour chaque variable et pour le mois i
+          at_gap<-del[,s]
+          #Il y a des journ?e qui ont plutot commence ? 06:30 donc NA dans del
+          at_gap<-as.numeric(na.omit(at_gap))
+          Q<-Eddy_var_name[s]
+          EddyData.F[at_gap,Q]<-NA
+          
+          if(s==1) {
+            EddyData.F[at_gap,"Tair"]<-NA
+          }
+          if(s==3) {
+            EddyData.F[at_gap,"Rh"]<-NA
+          }
+          
+          # Add time stamp in POSIX time format
+          EddyDataWithPosix.F <- fConvertTimeToPosix(
+            EddyData.F, 'YMDH', Year = 'Year', Day = 'Day', Hour = 'Hour',Month = 'Month')
+          
+          
+          EddyProc.C <- sEddyProc$new(siteyear, EddyDataWithPosix.F, variables)
+          EddyProc.C$sSetLocationInfo(lat, long, tz)  # site location info
+          
+          # See the content
+          str(EddyProc.C)
+          EddyProc.C$sPrintFrames(NumRows.i = 6L)
+          # Meteo must be gap-filled even when without gaps to run the partitioning 
+          for (met_var in variables) {#MDS Gap_filling
+            EddyProc.C$sMDSGapFill(met_var, FillAll = TRUE,suffix = paste(X_percent_suffix[t],"_",simulation[j], sep = "") )
+          }
+          
+          Gapvalfill<-EddyProc.C$sExportResults()
+          FP_vars <- c(paste(Eddy_var_name[s],"_",X_percent_suffix[t],"_",simulation[j],"_f", sep = ""))
+          FP_varsd <- c(paste(Eddy_var_name[s],"_",X_percent_suffix[t],"_",simulation[j],"_fsd", sep = ""))
+          V_gap_101<-subset(Gapvalfill, select=FP_vars)#Recup?ration des colonne des variable gapfiller
+          V_gap_101sd<-subset(Gapvalfill, select=FP_varsd)
+          colnames(V_gap_101)=c(paste(variables1[s],"_",X_percent_suffix[t],"_",simulation[j],"_f", sep = ""))#Refoematage qu nom de base
+          colnames(V_gap_101sd)=c(paste(variables1[s],"_",X_percent_suffix[t],"_",simulation[j],"_fsd", sep = ""))
+          #Data_gapVal<-cbind(Data_gapVal,V_gap_101)
+          XVal<-cbind(XVal,V_gap_101,V_gap_101sd)#Concatenation avec XVal
+          remove(V_gap_101,Gapvalfill)
+          
+        }
+        
+        
+        
+        
+        
+        
       }
       
-      Gapvalfill<-EddyProc.C$sExportResults()
-      FP_vars <- c(paste(variables,"_",X_percent_suffix[t],"_",simulation[j],"_f", sep = ""))
-      FP_varsd <- c(paste(variables,"_",X_percent_suffix[t],"_",simulation[j],"_fsd", sep = ""))
-      V_gap_101<-subset(Gapvalfill, select=FP_vars)#Recup?ration des colonne des variable gapfiller
-      V_gap_101sd<-subset(Gapvalfill, select=FP_varsd)
-      variables1<-c("Swin","Tair","Tsoil","HR","VPD")
-      colnames(V_gap_101)=c(paste(variables1,"_",X_percent_suffix[t],"_",simulation[j],"_f", sep = ""))#Refoematage qu nom de base
-      colnames(V_gap_101sd)=c(paste(variables1,"_",X_percent_suffix[t],"_",simulation[j],"_fsd", sep = ""))
-      #Data_gapVal<-cbind(Data_gapVal,V_gap_101)
-      XVal<-cbind(XVal,V_gap_101,V_gap_101sd)#Concatenation avec XVal
+      write.table(XVal,file=paste(path_out,Sites[n],"_artificial_gap_",X_percent_suffix[t],"_1_2.csv",sep = ""),row.names = FALSE,sep = ";")#Sauvegade dans la direction
+      remove(XVal)
       
-          remove(V_gap_101,V_gap_101sd,del,Gapvalfill)
-    }
-    write.table(XVal,file=paste(path_out,Sites[n],"_artificial_gap_",X_percent_suffix[t],".csv",sep = ""),row.names = FALSE,sep = ";")#Sauvegade dans la direction
-    remove(XVal)
-    
-    if(t==length(X_percent)){#test
-      beep(3)
     }
     
-    Sys.sleep(60)
-    setTxtProgressBar(pb_a,t)
     
-    }
+    
+    
+  }
+  
+  
+  
+  
+  
+  
+  
+  remove(XVal)
+  
+  if(t==length(X_percent)){#test
+    beep(3)
+  }
+  
+  Sys.sleep(60)
+  setTxtProgressBar(pb_a,t)
+  
 }
 
 #######################################################################################
@@ -1030,10 +1720,10 @@ simulation<-as.character(simulation)
 Seas<-c("Wet_Season","Dry_Season")#Vecteur  de stockage des noms des diff?rent p?riode d'unn jours test
 for (m in 1:length(Seas)) {
   
-  path1<-paste(path,"Tables/MDS_Test/Season_test/Output_of_test/",Seas[m],"/",sep = "")
+  path1<-paste(path,Sites[n],"/Table/MDS_Test/Season_test/Output_of_test/",Seas[m],"/",sep = "")
   
   
-  X_percent<-c(50,60,70)
+  X_percent<-c(25,50,100)
   X_percent_suffix<-as.character(X_percent)
   Percent_file<-paste("Percent_",X_percent_suffix,sep="")
   
@@ -1046,42 +1736,67 @@ for (m in 1:length(Seas)) {
     path_out <- paste(path1,"Output_by_PecentSimulation_mean/",Percent_file[t],"/",sep="")
     
     XVal<-Data_test
-    X<-read.csv(paste(path_in,Sites[n],"_artificial_gap_",X_percent_suffix[t],".csv",sep = ""),sep = ";")
-    
-    for (k in 1:length(Variable_names)) {
-      FP_vars<-paste(Variable_names[k],"_",X_percent_suffix[t],"_",simulation,"_f",sep="")
-      X_sub<-subset(X, select=FP_vars)
-      X_sub_vect<-c()
-      Error_vec<-c()
-      for (p in 1:nrow(X_sub)) {
-        vect<-unname(unlist(X_sub[p,]))
-        le<-length(simulation)
-        X_sub_vect[p]<-mean(vect)
-        Error_vec[p]<-round(qt(0.975,df=le-1)*sqrt(var(vect))/sqrt(le),3)  
-        
+    X<-read.csv(paste(path_in,Sites[n],"_artificial_gap_",X_percent_suffix[t],"_1_2.csv",sep = ""),sep = ";")
+    if(t==3){
+      
+      
+      Output_1<-X
+      
+      write.table(Output_1,file=paste(path_out,Sites[n],"_artificial_gap_",X_percent_suffix[t],"_mean_1.csv",sep = ""),row.names = FALSE,sep = ";")
+      
+      
+    }
+    if(t!=3){
+      if(t==1){
+        simulation <- as.character(c(1:4))
+      }
+      
+      if(t==2){
+        simulation <- as.character(c(1:2))
       }
       
       
-      Output[[k]]<-X_sub_vect
-      Output_Error[[k]]<-Error_vec
+      for (k in 1:length(Variable_names)) {
+        FP_vars<-paste(Variable_names[k],"_",X_percent_suffix[t],"_",simulation,"_f",sep="")
+        X_sub<-subset(X, select=FP_vars)
+        X_sub_vect<-c()
+        Error_vec<-c()
+        for (p in 1:nrow(X_sub)) {
+          vect<-unname(unlist(X_sub[p,]))
+          le<-length(simulation)
+          X_sub_vect[p]<-mean(vect)
+          Error_vec[p]<-round(qt(0.975,df=le-1)*sqrt(var(vect))/sqrt(le),3)  
+          
+        }
+        
+        # X_sub<-t(X_sub)
+        # X_sub_mean<-colMeans(X_sub)
+        # X_sub_mean<-as.numeric(X_sub_mean)
+        #Output[[k]]<-X_sub_mean
+        Output[[k]]<-X_sub_vect
+        Output_Error[[k]]<-Error_vec
+        
+      }    
       
-    }    
+      auxi<-max(sapply(Output,length))
+      res<-sapply(Output,function(u) c(u,rep(NA,auxi-length(u))))
+      res<-as.data.frame(res)
+      colnames(res)=paste(Variable_names,"_",X_percent_suffix[t],"_f",sep="")
+      
+      auxi1<-max(sapply(Output_Error,length))
+      res1<-sapply(Output_Error,function(u) c(u,rep(NA,auxi-length(u))))
+      res1<-as.data.frame(res1)
+      colnames(res1)=paste(Variable_names,"_",X_percent_suffix[t],"_error_f",sep="")
+      
+      
+      Output_1<-cbind(XVal,res,res1)
+      
+      write.table(Output_1,file=paste(path_out,Sites[n],"_artificial_gap_",X_percent_suffix[t],"_mean_1.csv",sep = ""),row.names = FALSE,sep = ";")
+      remove(XVal)
+      
+    }
     
-  auxi<-max(sapply(Output,length))
-  res<-sapply(Output,function(u) c(u,rep(NA,auxi-length(u))))
-  res<-as.data.frame(res)
-  colnames(res)=paste(Variable_names,"_",X_percent_suffix[t],"_f",sep="")
-  
-  auxi1<-max(sapply(Output_Error,length))
-  res1<-sapply(Output_Error,function(u) c(u,rep(NA,auxi-length(u))))
-  res1<-as.data.frame(res1)
-  colnames(res1)=paste(Variable_names,"_",X_percent_suffix[t],"_error_f",sep="")
-  
-  
-  Output_1<-cbind(XVal,res,res1)
-  
-    write.table(Output_1,file=paste(path_out,Sites[n],"_artificial_gap_",X_percent_suffix[t],"_mean.csv",sep = ""),row.names = FALSE,sep = ";")
-    remove(XVal)
+    
     
     
     
@@ -1089,7 +1804,7 @@ for (m in 1:length(Seas)) {
       beep(3)
     }
     
-    
+    # Sys.sleep(120)
     setTxtProgressBar(pb_a,t)
     
     
@@ -1100,7 +1815,6 @@ for (m in 1:length(Seas)) {
   }
   
 }
-
 #######################################################################################
 #Calcule des Metrique
 #######################################################################################
@@ -1173,36 +1887,58 @@ N<-12
 
 X<-NULL
 for (m in 1:length(Seas)) {
-  path1<-paste(path,"Tables/MDS_Test/Season_test/Output_of_test/",Seas[m],"/",sep = "")
+  path1<-paste(path,Sites[n],"/Table/MDS_Test/Season_test/Output_of_test/",Seas[m],"/",sep = "")
   path_in<-paste(path1,"Output_by_PecentSimulation_mean/",sep = "")
-  X_percent<-c(50,60,70)
+  X_percent<-c(25,50,100)
   X_percent_suffix<-as.character(X_percent)
   Percent_file<-paste("Percent_",X_percent_suffix,sep="")
   
   for (t in 1:length(X_percent)) {
     
     Output_list_rmse<-list()
+    Output_list_var<-list()
+    Output_list_mae<-list()
     Output_list_BE<-list()
     Output_list_DSE<-list()
+    Output_list_mse<-list()
+    Output_list_IoAd<-list()
+    Output_list_MEF<-list()
     Output_list_RSR<-list()
+    Output_list_RVE<-list()
+    Output_list_R2<-list()
     Output_list_PBE<-list()
     
     
-    Data_month<-read.csv(paste(path_in,Percent_file[t],"/",Sites[n],"_artificial_gap_",X_percent_suffix[t],"_mean.csv",sep = ""),sep = ";") 
+    Data_month<-read.csv(paste(path_in,Percent_file[t],"/",Sites[n],"_artificial_gap_",X_percent_suffix[t],"_mean_1.csv",sep = ""),sep = ";") 
     Data_month$DateUTC<- ymd(Data_month$DateUTC)
     Output_var_rmse<-c()
+    Output_var_var<-c()
+    Output_var_mae<-c()
     Output_var_BE<-c()
     Output_var_PBE<-c()
     Output_var_DSE<-c()
+    Output_var_mse<-c()
+    Output_var_sum<-c()
     Output_var_mean<-c()
+    Output_var_MEF<-c()
     Output_var_RSR<-c()
+    Output_var_RVE<-c()
+    Output_var_IoAd<-c()
+    Output_var_R2<-c()
     for (k in 1:length(Variable_names)) {
       Month <- Season_test[1,Seas[m]]
       Table_month <- filter(Data_month,month(DateUTC)==Month)
       
       Output_var_rmse[k]<-rmse(Table_month[,Variable_names[k]],Table_month[,paste(Variable_names1[k],"_",X_percent_suffix[t],"_f",sep = "")])
+      Output_var_var[k]<-var(Table_month[,Variable_names[k]],Table_month[,paste(Variable_names1[k],"_",X_percent_suffix[t],"_f",sep = "")])
+      Output_var_mae[k]<-mae(Table_month[,Variable_names[k]],Table_month[,paste(Variable_names1[k],"_",X_percent_suffix[t],"_f",sep = "")])
       Output_var_BE[k]<-bias(Table_month[,Variable_names[k]],Table_month[,paste(Variable_names1[k],"_",X_percent_suffix[t],"_f",sep = "")])
+      Output_var_mse[k]<-mse(Table_month[,Variable_names[k]],Table_month[,paste(Variable_names1[k],"_",X_percent_suffix[t],"_f",sep = "")])
+      Output_var_sum[k]<-sum(Table_month[,Variable_names[k]])
       Output_var_mean[k]<-mean(Table_month[,Variable_names[k]])
+      Output_var_IoAd[k]<-d(Table_month[,paste(Variable_names1[k],"_",X_percent_suffix[t],"_f",sep = "")],Table_month[,Variable_names[k]])
+      Output_var_R2[k]<-cor(Table_month[,paste(Variable_names1[k],"_",X_percent_suffix[t],"_f",sep = "")],Table_month[,Variable_names[k]])
+      Output_var_MEF[k]<-NSE(Table_month[,paste(Variable_names1[k],"_",X_percent_suffix[t],"_f",sep = "")],Table_month[,Variable_names[k]])
       Output_var_RSR[k]<-rsr(Table_month[,paste(Variable_names1[k],"_",X_percent_suffix[t],"_f",sep = "")],Table_month[,Variable_names[k]])
       # 
       m1<-t(Table_month[,Variable_names[k]])
@@ -1211,18 +1947,30 @@ for (m in 1:length(Seas)) {
       Entropy<-EntropyExplorer(m1,m2,dmetric = "dse",otype = "v",shift = c("auto","auto"))
       # 
       Output_var_DSE[k]<-abs(Entropy[,3]) 
+      Output_var_RVE[k]<- Output_var_BE[k]/Output_var_sum[k]
       Output_var_PBE[k]<-(Output_var_BE[k]/Output_var_mean[k])*100
       
       # 
       
     }
+    #Output_var_MEF<- (1-(Output_var_mse/Output_var_var))*100
+    #Output_var_RSR<- (Output_var_rmse/sqrt(Output_var_var))*100 
     
-    
+    # 
+    # 
+    # 
     Output_list_rmse<-Output_var_rmse
+    Output_list_var<-Output_var_var
+    Output_list_mae<-Output_var_mae
     Output_list_BE<-Output_var_BE
     Output_list_PBE<-round(Output_var_PBE,2)
+    Output_list_mse<-Output_var_mse
     Output_list_DSE<-Output_var_DSE
+    Output_list_MEF<-Output_var_MEF
     Output_list_RSR<-round(Output_var_RSR,2)
+    Output_list_RVE<-Output_var_RVE
+    Output_list_IoAd<-Output_var_IoAd
+    Output_list_R2<-Output_var_R2
     
     auxi<-max(sapply(Output_list_rmse,length))
     res<-sapply(Output_list_rmse,function(u) c(u,rep(NA,auxi-length(u))))
@@ -1231,7 +1979,19 @@ for (m in 1:length(Seas)) {
     rownames(res)=Variable_names
     Output_frame_rmse<-res
     
+    auxi<-max(sapply(Output_list_var,length))
+    res<-sapply(Output_list_var,function(u) c(u,rep(NA,auxi-length(u))))
+    res<-as.data.frame(res)
+    colnames(res)=paste("VAR_",X_percent_suffix[t],"_",SeasID[m],sep = "")         
+    rownames(res)=Variable_names
+    Output_frame_var<-res
     
+    auxi<-max(sapply(Output_list_mae,length))
+    res<-sapply(Output_list_mae,function(u) c(u,rep(NA,auxi-length(u))))
+    res<-as.data.frame(res)
+    colnames(res)=paste("MAE_",X_percent_suffix[t],"_",SeasID[m],sep = "")         
+    rownames(res)=Variable_names
+    Output_frame_mae<-res
     
     auxi<-max(sapply(Output_list_BE,length))
     res<-sapply(Output_list_BE,function(u) c(u,rep(NA,auxi-length(u))))
@@ -1255,9 +2015,19 @@ for (m in 1:length(Seas)) {
     rownames(res)=Variable_names
     Output_frame_DSE<-res
     
+    auxi<-max(sapply(Output_list_mse,length))
+    res<-sapply(Output_list_mse,function(u) c(u,rep(NA,auxi-length(u))))
+    res<-as.data.frame(res)
+    colnames(res)=paste("MSE_",X_percent_suffix[t],"_",SeasID[m],sep = "")         
+    rownames(res)=Variable_names
+    Output_frame_MSE<-res
     
-    
-    
+    auxi<-max(sapply(Output_list_MEF,length))
+    res<-sapply(Output_list_MEF,function(u) c(u,rep(NA,auxi-length(u))))
+    res<-as.data.frame(res)
+    colnames(res)=paste("MEF_",X_percent_suffix[t],"_",SeasID[m],sep = "")         
+    rownames(res)=Variable_names
+    Output_frame_MEF<-res
     
     auxi<-max(sapply(Output_list_RSR,length))
     res<-sapply(Output_list_RSR,function(u) c(u,rep(NA,auxi-length(u))))
@@ -1266,13 +2036,33 @@ for (m in 1:length(Seas)) {
     rownames(res)=Variable_names
     Output_frame_RSR<-res
     
+    auxi<-max(sapply(Output_list_RVE,length))
+    res<-sapply(Output_list_RVE,function(u) c(u,rep(NA,auxi-length(u))))
+    res<-as.data.frame(res)
+    colnames(res)=paste("RVR_",X_percent_suffix[t],"_",SeasID[m],sep = "")         
+    rownames(res)=Variable_names
+    Output_frame_RVR<-res
+    
+    auxi<-max(sapply(Output_list_IoAd,length))
+    res<-sapply(Output_list_IoAd,function(u) c(u,rep(NA,auxi-length(u))))
+    res<-as.data.frame(res)
+    colnames(res)=paste("IoAd_",X_percent_suffix[t],"_",SeasID[m],sep = "")         
+    rownames(res)=Variable_names
+    Output_frame_IoAd<-res
+    
+    auxi<-max(sapply(Output_list_R2,length))
+    res<-sapply(Output_list_R2,function(u) c(u,rep(NA,auxi-length(u))))
+    res<-as.data.frame(res)
+    colnames(res)=paste("R2_",X_percent_suffix[t],"_",SeasID[m],sep = "")         
+    rownames(res)=Variable_names
+    Output_frame_R2<-res
     
     if(is.null(X)){
-      X<-cbind(Output_frame_PBE,Output_frame_DSE,Output_frame_RSR)
+      X<-cbind(Output_frame_rmse,Output_frame_var,Output_frame_mae,Output_frame_BE,Output_frame_PBE,Output_frame_DSE,Output_frame_MSE,Output_frame_MEF,Output_frame_RSR,Output_frame_RVR,Output_frame_IoAd,Output_frame_R2)
       
     }
     else{
-      X<-cbind(X,Output_frame_PBE,Output_frame_DSE,Output_frame_RSR)
+      X<-cbind(X,Output_frame_rmse,Output_frame_var,Output_frame_mae,Output_frame_BE,Output_frame_PBE,Output_frame_DSE,Output_frame_MSE,Output_frame_MEF,Output_frame_RSR,Output_frame_RVR,Output_frame_IoAd,Output_frame_R2)
     }
     
     

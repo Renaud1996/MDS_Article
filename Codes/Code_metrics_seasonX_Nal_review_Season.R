@@ -69,7 +69,7 @@ library(ggsci)
 library(gridExtra)
 library(ggthemes)
 library(ggpubr)
-X_percent<-c(50,60,70)
+X_percent<-c(25,50,100)
 X_percent_suffix<-as.character(X_percent)
 set.seed(0852)#Pour rendre reproductif à l'avenir
 
@@ -111,7 +111,7 @@ for (i in 1:length(X_percent_suffix) ) {
     setNames(c("Variable","state","value")) %>%
     # convert value to numeric (also converts '-' to NA, gives a warning)
     mutate(value=as.numeric(value))
-  vi<-c(1e-07,1e-06,1e-05,1.6e-03)  
+  vi<-c(-0.1,1e-07,1e-06,1e-05)  
   # vi<-c(1e-07,1e-06,1e-05,1.5e-03)
   Data_metrics3 <- Data_metrics2 %>%
     # convert state to factor and reverse order of levels
@@ -125,25 +125,56 @@ for (i in 1:length(X_percent_suffix) ) {
   
   # assign text colour
   textcol <- "black"
+  if(i==1){
+    # further modified ggplot
+    p <- ggplot(Data_metrics3,aes(x=Variable,y=state,fill=countfactor,width=0.6,height=1))+
+      #add border white colour of line thickness 0.25
+      geom_tile(colour="#FFFFFF",size=1)+
+      #remove x and y axis labels
+      guides(fill=guide_legend(title="Intrvals"))+
+      #labs(x="",y="",title=paste("Differential Shanon Entropy  for",X_percent_suffix[i],"% of gap injected"))+
+      labs(x="",y="")+
+      #remove extra space
+      scale_y_discrete(expand=c(0,0),breaks=y_scale)+
+      #define new breaks on x-axis
+      scale_x_discrete(expand=c(0,0),
+                       breaks=Variable  )+
+      #geom_text(aes(label = value),angle = 90)+
+      # labels=c("Less Homogene","Homogene","Very Homogene")
+      scale_fill_manual(values=c("#550000","#008000"),na.value = "grey")+
+      #scale_fill_manual(values=c("#7C878EFF","#000000","#C0C0C0","#5C88DAFF","#CC0C00FF","#708090","#000000"),na.value = "grey")+
+      #coord_fixed()+
+      ggtitle(paste("DSE ",X_percent_suffix[i],"%",sep=""))+
+      theme_bluewhite()
+  }
   
-  # further modified ggplot
-  p <- ggplot(Data_metrics3,aes(x=Variable,y=state,fill=countfactor,width=0.6,height=1))+
-    #add border white colour of line thickness 0.25
-    geom_tile(colour="#FFFFFF",size=1)+
-    #remove x and y axis labels
-    guides(fill=guide_legend(title="Intrvals"))+
-    #labs(x="",y="",title=paste("Differential Shanon Entropy  for",X_percent_suffix[i],"% of gap injected"))+
-    labs(x="",y="")+
-    #remove extra space
-    scale_y_discrete(expand=c(0,0),breaks=y_scale)+
-    #define new breaks on x-axis
-    scale_x_discrete(expand=c(0,0),
-                     breaks=Variable  )+
-    # labels=c("Less Homogene","Homogene","Very Homogene")
-    scale_fill_manual(values=c("#550000","#FF6600","#008000","#669900"),na.value = "grey")+
-    #coord_fixed()+
-    ggtitle(paste("DSE ",X_percent_suffix[i],"%",sep=""))+
-    theme_bluewhite()
+  if(i!=1){
+    
+    # further modified ggplot
+    p <- ggplot(Data_metrics3,aes(x=Variable,y=state,fill=countfactor,width=0.6,height=1))+
+      #add border white colour of line thickness 0.25
+      geom_tile(colour="#FFFFFF",size=1)+
+      #remove x and y axis labels
+      guides(fill=guide_legend(title="Intrvals"))+
+      #labs(x="",y="",title=paste("Differential Shanon Entropy  for",X_percent_suffix[i],"% of gap injected"))+
+      labs(x="",y="")+
+      #remove extra space
+      scale_y_discrete(expand=c(0,0),breaks=y_scale)+
+      #define new breaks on x-axis
+      scale_x_discrete(expand=c(0,0),
+                       breaks=Variable  )+
+      #geom_text(aes(label = value),angle = 90)+
+      # labels=c("Less Homogene","Homogene","Very Homogene")
+      scale_fill_manual(values=c("#550000","#008000"),na.value = "grey")+
+      #scale_fill_manual(values=c("#7C878EFF","#000000","#C0C0C0","#5C88DAFF","#CC0C00FF","#708090","#000000"),na.value = "grey")+
+      #coord_fixed()+
+      ggtitle(paste("DSE ",X_percent_suffix[i],"%",sep=""))+
+      theme_bluewhite()
+    
+    
+  }
+  
+  
   
   if(i==1){
     p1<-p
@@ -166,7 +197,9 @@ for (i in 1:length(X_percent_suffix) ) {
   
 }
 
-Q_i_DSE<-ggarrange(p1,p2,p3 ,nrow = 1,ncol=3,common.legend = TRUE,legend.grob =get_legend(p1) , legend="right")
+Q_i_DSE<-ggarrange(p1,p2,p3,nrow = 1,ncol=3,common.legend = TRUE,legend.grob =get_legend(p1) , legend="right")
+# Q_i<-annotate_figure(Q_i, top = text_grob(paste("Differential Shanon Entropy per % of gap injected"), 
+#                                           color = "red", face = "bold", size = 12))
 
 p1<-NULL
 p2<-NULL
@@ -185,7 +218,8 @@ for (i in 1:length(X_percent_suffix) ) {
     # convert value to numeric (also converts '-' to NA, gives a warning)
     mutate(value=as.numeric(value))
   
-  
+  #vi<-c(-0.06,0.03)
+  # vi<-c(-0.1,-0.001,0.12)
   Data_metrics3 <- Data_metrics2 %>%
     # convert state to factor and reverse order of levels
     mutate(state=factor(state,levels=rev(sort(unique(state))))) %>%
@@ -206,7 +240,7 @@ for (i in 1:length(X_percent_suffix) ) {
   
   # further modified ggplot
   
-  
+  if(i==3){
     
     p <- ggplot(Data_metrics3,aes(x=Variable,y=state,fill=countfactor,width=0.6,height=1))+
       #add border white colour of line thickness 0.25
@@ -220,11 +254,39 @@ for (i in 1:length(X_percent_suffix) ) {
       #define new breaks on x-axis
       scale_x_discrete(expand=c(0,0),
                        breaks=Variable)+
-      scale_fill_manual(values=c("#669900"),na.value = "grey")+
+      geom_text(aes(label = value),angle = 90)+
+      scale_fill_manual(values=c("#550000","#8CEF74","#008000"),na.value = "grey")+
       #coord_fixed()+
       theme_grey(base_size=10)+
       ggtitle(paste("PBIAS ",X_percent_suffix[i],"%",sep=""))+
       theme_bluewhite()
+    
+  }
+  
+  if(i!=3){
+    
+    p <- ggplot(Data_metrics3,aes(x=Variable,y=state,fill=countfactor,width=0.6,height=1))+
+      #add border white colour of line thickness 0.25
+      geom_tile(colour="#FFFFFF",size=1)+
+      #remove x and y axis labels
+      guides(fill=guide_legend(title="Intrvals"))+
+      #labs(x="",y="",title=paste("Percentage of bias for",X_percent_suffix[i],"% of gap injected"))+
+      labs(x="",y="")+
+      #remove extra space
+      scale_y_discrete(expand=c(0,0))+
+      #define new breaks on x-axis
+      scale_x_discrete(expand=c(0,0),
+                       breaks=Variable)+
+      geom_text(aes(label = value),angle = 90)+
+      scale_fill_manual(values=c("#008000"),na.value = "grey")+
+      #coord_fixed()+
+      theme_grey(base_size=10)+
+      ggtitle(paste("PBIAS ",X_percent_suffix[i],"%",sep=""))+
+      theme_bluewhite()
+    
+  }
+  
+  
   
   
   
@@ -272,7 +334,7 @@ for (i in 1:length(X_percent_suffix) ) {
   
   
   
-  
+  # vi<-c(0,0.7)
   Data_metrics3 <- Data_metrics2 %>%
     # convert state to factor and reverse order of levels
     mutate(state=factor(state,levels=rev(sort(unique(state))))) %>%
@@ -294,24 +356,75 @@ for (i in 1:length(X_percent_suffix) ) {
   textcol <- "black"
   
   # further modified ggplot
-
-  p <- ggplot(Data_metrics3,aes(x=Variable,y=state,fill=countfactor,width=0.6,height=1))+
-    #add border white colour of line thickness 0.25
-    geom_tile(colour="#FFFFFF",size=1)+
-    #remove x and y axis labels
-    guides(fill=guide_legend(title="Intrvals"))+
-    #labs(x="",y="",title=)+  #remove extra space
-    labs(x="",y="")+  #remove extra space
-    scale_y_discrete(expand=c(0,0))+
-    #define new breaks on x-axis
-    scale_x_discrete(expand=c(0,0),
-                     breaks=Variable)+
-    # labels=c("Unsatisfactory","Satisfactory","Good")
-    scale_fill_manual(values=c("#669900"),na.value = "grey")+
-    #coord_fixed()+
-    theme_grey(base_size=10)+
-    ggtitle(paste("RSR ",X_percent_suffix[i],"%",sep=""))+
-    theme_bluewhite()  
+  if(i==1){
+    
+    p <- ggplot(Data_metrics3,aes(x=Variable,y=state,fill=countfactor,width=0.6,height=1))+
+      #add border white colour of line thickness 0.25
+      geom_tile(colour="#FFFFFF",size=1)+
+      #remove x and y axis labels
+      guides(fill=guide_legend(title="Intrvals"))+
+      #labs(x="",y="",title=)+  #remove extra space
+      labs(x="",y="")+  #remove extra space
+      scale_y_discrete(expand=c(0,0))+
+      #define new breaks on x-axis
+      scale_x_discrete(expand=c(0,0),
+                       breaks=Variable)+
+      geom_text(aes(label = value),angle = 90)+
+      # labels=c("Unsatisfactory","Satisfactory","Good")
+      scale_fill_manual(values=c("#008000"),na.value = "grey")+
+      #coord_fixed()+
+      theme_grey(base_size=10)+
+      ggtitle(paste("RSR ",X_percent_suffix[i],"%",sep=""))+
+      theme_bluewhite()
+    
+  }
+  
+  if(i==2){
+    p <- ggplot(Data_metrics3,aes(x=Variable,y=state,fill=countfactor,width=0.6,height=1))+
+      #add border white colour of line thickness 0.25
+      geom_tile(colour="#FFFFFF",size=1)+
+      #remove x and y axis labels
+      guides(fill=guide_legend(title="Intrvals"))+
+      #labs(x="",y="",title=)+  #remove extra space
+      labs(x="",y="")+  #remove extra space
+      scale_y_discrete(expand=c(0,0))+
+      #define new breaks on x-axis
+      scale_x_discrete(expand=c(0,0),
+                       breaks=Variable)+
+      geom_text(aes(label = value),angle = 90)+
+      # labels=c("Unsatisfactory","Satisfactory","Good")
+      scale_fill_manual(values=c("#8CEF74","#008000"),na.value = "grey")+
+      #coord_fixed()+
+      theme_grey(base_size=10)+
+      ggtitle(paste("RSR ",X_percent_suffix[i],"%",sep=""))+
+      theme_bluewhite()
+    
+  }
+  
+  
+  if(i==3){
+    p <- ggplot(Data_metrics3,aes(x=Variable,y=state,fill=countfactor,width=0.6,height=1))+
+      #add border white colour of line thickness 0.25
+      geom_tile(colour="#FFFFFF",size=1)+
+      #remove x and y axis labels
+      guides(fill=guide_legend(title="Intrvals"))+
+      #labs(x="",y="",title=)+  #remove extra space
+      labs(x="",y="")+  #remove extra space
+      scale_y_discrete(expand=c(0,0))+
+      #define new breaks on x-axis
+      scale_x_discrete(expand=c(0,0),
+                       breaks=Variable)+
+      geom_text(aes(label = value),angle = 90)+
+      # labels=c("Unsatisfactory","Satisfactory","Good")
+      scale_fill_manual(values=c("#550000","#8CEF74","#008000"),na.value = "grey")+
+      #coord_fixed()+
+      theme_grey(base_size=10)+
+      ggtitle(paste("RSR ",X_percent_suffix[i],"%",sep=""))+
+      theme_bluewhite()
+    
+  }
+  
+  
   
   if(i==1){
     p1<-p
@@ -334,9 +447,7 @@ for (i in 1:length(X_percent_suffix) ) {
 
 Q_i_RSR<-ggarrange(p1,p2,p3,nrow =1,ncol=3,common.legend = TRUE,legend.grob = get_legend(p3), legend="right")
 
-Q_i<-ggarrange(Q_i_PBE,Q_i_RSR,Q_i_DSE,nrow = 3,ncol=1,common.legend = FALSE, legend="right" )
+Q_i<-ggarrange(Q_i_PBE,Q_i_RSR,Q_i_DSE,nrow = 1,ncol=3,common.legend = FALSE, legend="right" )
 Q_i<-annotate_figure(Q_i, top = text_grob(paste(Sites[n],Localisation,sep=" "), 
                                           color = "black", face = "bold", size = 14))
 Q_i_Nalohou <- Q_i
-
-Q_i_Nalohou

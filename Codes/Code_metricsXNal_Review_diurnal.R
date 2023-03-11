@@ -71,7 +71,7 @@ library(ggsci)
 library(gridExtra)
 library(ggthemes)
 library(ggpubr)
-X_percent<-c(50,60,70,80,90)
+X_percent<-c(25,50,100)
 X_percent_suffix<-as.character(X_percent)
 set.seed(0852)#Pour rendre reproductif ? l'avenir
 
@@ -138,14 +138,19 @@ for (i in 1:length(X_percent_suffix) ) {
   
   
   if(i==1){
-    
+    # vi<-c(-0.10,-0.001,0.09,0.107)
     Data_metrics3 <- Data_metrics2 %>%
       # convert state to factor and reverse order of levels
       mutate(state=factor(state,levels=rev(sort(unique(state))))) %>%
       # create a new variable from count
       mutate(countfactor=cut(value,breaks=c(-50,-25,-15,-10,10,15,25,50),
-      labels=c("Bad","Satisfactory","Good","Very_Good","Good","Satisfactory","Bad") ))
-    Data_metrics3$countfactor <- as.character(Data_metrics3$countfactor)
+                             labels=c("Bad","Satisfactory","Good","Very_Good","Good","Satisfactory","Bad") ))
+    # Data_metrics3$countfactor <- as.character(Data_metrics3$countfactor)
+    
+    Data_metrics3$state <- factor(Data_metrics3$state,levels =c(paste(NoonID[1],"_",X1,sep = ""),paste(NoonID[3],"_",X1,sep = ""),paste(NoonID[2],"_",X1,sep = "")) )
+    
+    Data_metrics3$countfactor <- factor(Data_metrics3$countfactor,levels = c("Very_Good","Good","Satisfactory","Bad"))
+    
     
     for (r in 1:length(Data_metrics3$countfactor)) {
       if(is.na(Data_metrics3$countfactor[r])){
@@ -168,27 +173,34 @@ for (i in 1:length(X_percent_suffix) ) {
       #define new breaks on x-axis
       scale_x_discrete(expand=c(0,0),
                        breaks=Variable)+
-      scale_fill_manual(values=c("#550000","#008000","#FF6600","#669900"),na.value = "grey")+
+      scale_fill_manual(values=c("#008000","#8CEF74","#FF6600","#550000"),na.value = "grey")+
       #coord_fixed()+
       theme_grey(base_size=10)+
       ggtitle(paste("PBIAS ",X_percent_suffix[i],"%",sep=""))+
       theme_bluewhite()
   }
   if(i!=1){
-    
+    # vi<-c(-0.5,-0.001,0.09,0.426)
     Data_metrics3 <- Data_metrics2 %>%
       # convert state to factor and reverse order of levels
       mutate(state=factor(state,levels=rev(sort(unique(state))))) %>%
       # create a new variable from count
       mutate(countfactor=cut(value,breaks=c(-50,-25,-15,-10,10,15,25,50),
-      labels=c("Bad","Satisfactory","Good","Very_Good","Good","Satisfactory","Bad") ))
-    Data_metrics3$countfactor <- as.character(Data_metrics3$countfactor)
+                             labels=c("Bad","Satisfactory","Good","Very_Good","Good","Satisfactory","Bad") ))
+    # Data_metrics3$countfactor <- as.character(Data_metrics3$countfactor)
+    
+    Data_metrics3$state <- factor(Data_metrics3$state,levels =c(paste(NoonID[1],"_",X1,sep = ""),paste(NoonID[3],"_",X1,sep = ""),paste(NoonID[2],"_",X1,sep = "")) )
+    
+    Data_metrics3$countfactor <- factor(Data_metrics3$countfactor,levels = c("Very_Good","Good","Satisfactory","Bad"))
+    
+    
     for (r in 1:length(Data_metrics3$countfactor)) {
       if(is.na(Data_metrics3$countfactor[r])){
         Data_metrics3$countfactor[r] <- "Bad"
       }
       
     }
+    
     
     p <- ggplot(Data_metrics3,aes(x=Variable,y=state,fill=countfactor,width=0.6,height=1))+
       #add border white colour of line thickness 0.25
@@ -203,7 +215,7 @@ for (i in 1:length(X_percent_suffix) ) {
       scale_x_discrete(expand=c(0,0),
                        breaks=Variable)+
       # labels=c("Underestimate","Good","Overestimate")
-      scale_fill_manual(values=c("#550000","#008000","#FF6600","#669900"),na.value = "grey")+
+      scale_fill_manual(values=c("#008000","#8CEF74","#FF6600","#550000"),na.value = "grey")+
       # scale_fill_discrete()+
       #coord_fixed()+
       #coord_fixed()+
@@ -233,6 +245,8 @@ for (i in 1:length(X_percent_suffix) ) {
 
 Q_i_PBE<-ggarrange(p1,p2,p3,nrow =1 ,ncol=3,common.legend = TRUE, legend="right",legend.grob =get_legend(p3) )
 
+# Q_i_PBE_Nal<-annotate_figure(Q_i_PBE_Nal, top = text_grob(paste(Sites[n],sep=" "), 
+#                                                 color = "black", face = "bold", size = 14))
 
 
 
@@ -261,17 +275,21 @@ for (i in 1:length(X_percent_suffix) ) {
     # convert state to factor and reverse order of levels
     mutate(state=factor(state,levels=rev(sort(unique(state))))) %>%
     # create a new variable from count
-    mutate(countfactor=cut(value,breaks=c(0,0.5,0.6,0.7),
-    labels=c("Very_Good","Good","Satisfactory") ))
+    mutate(countfactor=cut(value,breaks=c(0,0.5,0.6,0.7,max(Data_metrics2$value)),
+                           labels=c("Very_Good","Good","Satisfactory","Bad") ))
   
-  Data_metrics3$countfactor <- as.character(Data_metrics3$countfactor)
+  # Data_metrics3$countfactor <- as.character(Data_metrics3$countfactor)
   
-  for (r in 1:length(Data_metrics3$countfactor)) {
-    if(is.na(Data_metrics3$countfactor[r])){
-      Data_metrics3$countfactor[r] <- "Bad"
-    }
-    
-  }
+  # for (r in 1:length(Data_metrics3$countfactor)) {
+  #   if(is.na(Data_metrics3$countfactor[r])){
+  #     Data_metrics3$countfactor[r] <- "Bad"
+  #   }
+  #   
+  # }
+  
+  Data_metrics3$state <- factor(Data_metrics3$state,levels =c(paste(NoonID[1],"_",X1,sep = ""),paste(NoonID[3],"_",X1,sep = ""),paste(NoonID[2],"_",X1,sep = "")) )
+  
+  Data_metrics3$countfactor <- factor(Data_metrics3$countfactor,levels = c("Very_Good","Good","Satisfactory","Bad"))
   
   
   # assign text colour
@@ -290,7 +308,7 @@ for (i in 1:length(X_percent_suffix) ) {
     scale_x_discrete(expand=c(0,0),
                      breaks=Variable)+
     # labels=c("Unsatisfactory","Satisfactory","Good")
-    scale_fill_manual(values=c("#550000","#008000","#FF6600","#669900"),na.value = "grey")+
+    scale_fill_manual(values=c("#008000","#8CEF74","#FF6600","#550000"),na.value = "grey")+
     #coord_fixed()+
     theme_grey(base_size=10)+
     ggtitle(paste("RSR ",X_percent_suffix[i],"%",sep=""))+
@@ -345,6 +363,8 @@ for (i in 1:length(X_percent_suffix) ) {
     # change level order
     mutate(countfactor=factor(as.character(countfactor),levels=rev(levels(countfactor))))
   
+  Data_metrics3$state <- factor(Data_metrics3$state,levels =c(paste(NoonID[1],"_",X1,sep = ""),paste(NoonID[3],"_",X1,sep = ""),paste(NoonID[2],"_",X1,sep = "")) )
+  
   
   # assign text colour
   textcol <- "black"
@@ -363,7 +383,7 @@ for (i in 1:length(X_percent_suffix) ) {
     scale_x_discrete(expand=c(0,0),
                      breaks=Variable  )+
     # labels=c("Less Homogene","Homogene","Very Homogene")
-    scale_fill_manual(values=c("#550000","#FF6600","#008000","#669900"),na.value = "grey")+
+    scale_fill_manual(values=c("#550000","#FF6600","#8CEF74","#008000"),na.value = "grey")+
     #scale_fill_manual(values=c("#7C878EFF","#000000","#C0C0C0","#5C88DAFF","#CC0C00FF","#708090","#000000"),na.value = "grey")+
     #coord_fixed()+
     ggtitle(paste("DSE ",X_percent_suffix[i],"%",sep=""))+
@@ -395,4 +415,4 @@ Q_i<-ggarrange(Q_i_PBE,Q_i_RSR,Q_i_DSE,nrow = 3,ncol=1,common.legend = FALSE, le
 Q_i<-annotate_figure(Q_i, top = text_grob(paste(Sites[n],Localisation,sep=" "), 
                                           color = "black", face = "bold", size = 14))
 Q_i_Nalohou <- Q_i
-Q_i_Nalohou
+ggsave(paste(path,Sites[n],"/Graphe/Metrics_test_plot/Cycle_diurne_test/",Sites[n],"_Heatmap_","MetricsXXXX_diurnal.svg",sep=""),plot=Q_i,width = 15,height = 14)
